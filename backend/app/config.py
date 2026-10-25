@@ -24,6 +24,7 @@ def _fix_db_url(url: str) -> str:
     """
     if not url:
         return "sqlite:///transport_gps_dev.db"
+    url = url.strip()
     if url.startswith("postgres://"):
         return url.replace("postgres://", "postgresql+psycopg2://", 1)
     if url.startswith("postgresql://") and not url.startswith("postgresql+"):
