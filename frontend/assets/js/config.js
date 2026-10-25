@@ -11,8 +11,8 @@
  *    (stored locally in browser localStorage without requiring a redeployment).
  */
 const PUBLIC_CONFIG = {
-  // Public production backend API placeholder — update with your deployed Railway service URL:
-  PRODUCTION_API_URL: 'https://<YOUR_RAILWAY_APP>.up.railway.app/api/v1',
+  // Public production backend API on Render:
+  PRODUCTION_API_URL: 'https://transport-gps-tracking.onrender.com/api/v1',
   LOCAL_API_URL: 'http://localhost:5000/api/v1',
   POLL_INTERVAL_MS: 4000,
   MAP_DEFAULT_CENTER: [19.0760, 72.8777], // Mumbai / JNPT Freight Corridor
