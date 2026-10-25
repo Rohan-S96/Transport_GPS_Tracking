@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drivers Roster &mdash; Transport GPS Tracking</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="bi bi-truck-front-fill"></i>
+        </div>
+        <div class="brand-text">
+          <h5>Transport GPS</h5>
+          <small class="text-muted">Fleet Intelligence v1.0</small>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Operations</div>
+        <a href="/index.html" class="nav-item-link">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="/live-tracking.html" class="nav-item-link">
+          <i class="bi bi-broadcast"></i> Live Map
+        </a>
+        <a href="/playback.html" class="nav-item-link">
+          <i class="bi bi-play-circle"></i> Route Playback
+        </a>
+        <a href="/trips.html" class="nav-item-link">
+          <i class="bi bi-signpost-split"></i> Trips & Cargo
+        </a>
+
+        <div class="nav-section-title">Fleet Assets</div>
+        <a href="/vehicles.html" class="nav-item-link">
+          <i class="bi bi-truck"></i> Vehicles & Trucks
+        </a>
+        <a href="/drivers.html" class="nav-item-link active">
+          <i class="bi bi-person-badge"></i> Drivers Roster
+        </a>
+        <a href="/companies.html" class="nav-item-link">
+          <i class="bi bi-buildings"></i> Clients & Depots
+        </a>
+        <a href="/geofences.html" class="nav-item-link">
+          <i class="bi bi-bounding-box-circles"></i> Geofences
+        </a>
+
+        <div class="nav-section-title">Safety & Reports</div>
+        <a href="/alerts.html" class="nav-item-link">
+          <i class="bi bi-exclamation-triangle"></i> Incident Alerts
+        </a>
+        <a href="/reports.html" class="nav-item-link">
+          <i class="bi bi-file-earmark-excel"></i> Reports & Export
+        </a>
+        <a href="/users.html" class="nav-item-link" data-min-role="fleet_manager">
+          <i class="bi bi-people"></i> Users & Roles
+        </a>
+        <a href="/settings.html" class="nav-item-link">
+          <i class="bi bi-gear"></i> System Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <div class="kpi-icon-wrap kpi-icon-blue" style="width: 34px; height: 34px; font-size: 1rem;">
+              <i class="bi bi-person"></i>
+            </div>
+            <div class="text-truncate">
+              <div class="small fw-bold text-white text-truncate current-user-name">Loading...</div>
+              <div class="text-dim" style="font-size: 0.7rem;"><span class="current-user-role"></span></div>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-danger btn-logout" title="Sign Out">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN APP CONTENT -->
+    <main class="app-main">
+      <!-- TOPBAR -->
+      <header class="app-topbar">
+        <div class="d-flex align-items-center gap-3">
+          <button id="sidebar-toggle-btn" class="btn btn-sm btn-outline-secondary d-lg-none" aria-label="Toggle menu">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <div class="topbar-title">
+            <h4>Drivers Roster &amp; Safety Scores</h4>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="btn btn-sm btn-primary" data-min-role="fleet_manager" data-bs-toggle="modal" data-bs-target="#addDriverModal">
+            <i class="bi bi-person-plus-fill me-1"></i>Add Driver
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT BODY -->
+      <div class="content-body">
+        <!-- FILTER BAR -->
+        <div class="custom-table-card p-3 mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-6 col-lg-4">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-search"></i></span>
+                <input type="text" id="driver-search" class="form-control" placeholder="Search driver name, license, phone...">
+              </div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+              <select id="driver-status-filter" class="form-select form-select-sm">
+                <option value="">All Driver Statuses</option>
+                <option value="active">Active</option>
+                <option value="on_leave">On Leave</option>
+                <option value="suspended">Suspended</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="col-md-2 ms-auto text-end">
+              <button class="btn btn-sm btn-outline-secondary" onclick="loadDrivers()">
+                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DRIVERS GRID -->
+        <div id="drivers-grid" class="row">
+          <div class="col-12 text-center py-5 text-muted">
+            <div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading drivers roster...
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ADD DRIVER MODAL -->
+  <div class="modal fade" id="addDriverModal" tabindex="-1" aria-labelledby="addDrvTitle" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="add-driver-form">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold text-white" id="addDrvTitle">
+              <i class="bi bi-person-plus-fill text-primary me-2"></i>Register Driver
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">First Name *</label>
+                <input type="text" id="driver-first-name" class="form-control" placeholder="Vikram" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Last Name *</label>
+                <input type="text" id="driver-last-name" class="form-control" placeholder="Singh" required>
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-7">
+                <label class="form-label small text-muted text-uppercase fw-semibold">License Number *</label>
+                <input type="text" id="driver-license" class="form-control" placeholder="MH-04-2019-0098231" required>
+              </div>
+              <div class="col-5">
+                <label class="form-label small text-muted text-uppercase fw-semibold">License Expiry</label>
+                <input type="date" id="driver-expiry" class="form-control">
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Phone Number *</label>
+                <input type="tel" id="driver-phone" class="form-control" placeholder="+91 98765 43210" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Experience (Yrs)</label>
+                <input type="number" id="driver-exp" class="form-control" placeholder="5" min="0">
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted text-uppercase fw-semibold">Email (optional)</label>
+              <input type="email" id="driver-email" class="form-control" placeholder="vikram@driver.fleet.com">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Driver</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT DRIVER MODAL -->
+  <div class="modal fade" id="editDriverModal" tabindex="-1" aria-labelledby="editDrvTitle" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="edit-driver-form">
+          <input type="hidden" id="edit-driver-id">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold text-white" id="editDrvTitle">
+              <i class="bi bi-pencil-square text-primary me-2"></i>Edit Driver Profile
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">First Name</label>
+                <input type="text" id="edit-driver-first-name" class="form-control" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Last Name</label>
+                <input type="text" id="edit-driver-last-name" class="form-control" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small text-muted text-uppercase fw-semibold">License Number</label>
+              <input type="text" id="edit-driver-license" class="form-control" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Phone Number</label>
+                <input type="tel" id="edit-driver-phone" class="form-control" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Email</label>
+                <input type="email" id="edit-driver-email" class="form-control">
+              </div>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Status</label>
+                <select id="edit-driver-status" class="form-select">
+                  <option value="active">Active</option>
+                  <option value="on_leave">On Leave</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Safety Score (%)</label>
+                <input type="number" id="edit-driver-score" class="form-control" min="0" max="100">
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/drivers.js"></script>
+</body>
+</html>

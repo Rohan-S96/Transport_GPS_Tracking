@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geofences &mdash; Transport GPS Tracking</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/map.css">
+  <style>
+    .geofence-viewport {
+      display: flex;
+      height: calc(100vh - var(--topbar-height));
+      position: relative;
+      overflow: hidden;
+    }
+    .geofence-sidebar {
+      width: 380px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+    .geofence-map-container {
+      flex-grow: 1;
+      height: 100%;
+      position: relative;
+    }
+    @media (max-width: 991.98px) {
+      .geofence-viewport {
+        flex-direction: column-reverse;
+      }
+      .geofence-sidebar {
+        width: 100%;
+        height: 50vh;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+      }
+      .geofence-map-container {
+        height: 50vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar-overlay"></div>
+
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="bi bi-truck-front-fill"></i>
+        </div>
+        <div class="brand-text">
+          <h5>Transport GPS</h5>
+          <small class="text-muted">Fleet Intelligence v1.0</small>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Operations</div>
+        <a href="/index.html" class="nav-item-link">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="/live-tracking.html" class="nav-item-link">
+          <i class="bi bi-broadcast"></i> Live Map
+        </a>
+        <a href="/playback.html" class="nav-item-link">
+          <i class="bi bi-play-circle"></i> Route Playback
+        </a>
+        <a href="/trips.html" class="nav-item-link">
+          <i class="bi bi-signpost-split"></i> Trips & Cargo
+        </a>
+
+        <div class="nav-section-title">Fleet Assets</div>
+        <a href="/vehicles.html" class="nav-item-link">
+          <i class="bi bi-truck"></i> Vehicles & Trucks
+        </a>
+        <a href="/drivers.html" class="nav-item-link">
+          <i class="bi bi-person-badge"></i> Drivers Roster
+        </a>
+        <a href="/companies.html" class="nav-item-link">
+          <i class="bi bi-buildings"></i> Clients & Depots
+        </a>
+        <a href="/geofences.html" class="nav-item-link active">
+          <i class="bi bi-bounding-box-circles"></i> Geofences
+        </a>
+
+        <div class="nav-section-title">Safety & Reports</div>
+        <a href="/alerts.html" class="nav-item-link">
+          <i class="bi bi-exclamation-triangle"></i> Incident Alerts
+        </a>
+        <a href="/reports.html" class="nav-item-link">
+          <i class="bi bi-file-earmark-excel"></i> Reports & Export
+        </a>
+        <a href="/users.html" class="nav-item-link" data-min-role="fleet_manager">
+          <i class="bi bi-people"></i> Users & Roles
+        </a>
+        <a href="/settings.html" class="nav-item-link">
+          <i class="bi bi-gear"></i> System Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <div class="kpi-icon-wrap kpi-icon-blue" style="width: 34px; height: 34px; font-size: 1rem;">
+              <i class="bi bi-person"></i>
+            </div>
+            <div class="text-truncate">
+              <div class="small fw-bold text-white text-truncate current-user-name">Loading...</div>
+              <div class="text-dim" style="font-size: 0.7rem;"><span class="current-user-role"></span></div>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-danger btn-logout" title="Sign Out">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN APP CONTENT -->
+    <main class="app-main">
+      <!-- TOPBAR -->
+      <header class="app-topbar">
+        <div class="d-flex align-items-center gap-3">
+          <button id="sidebar-toggle-btn" class="btn btn-sm btn-outline-secondary d-lg-none" aria-label="Toggle menu">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <div class="topbar-title">
+            <h4>Geofence Virtual Perimeters</h4>
+          </div>
+        </div>
+
+        <div class="topbar-actions">
+          <button class="btn btn-sm btn-primary" data-min-role="fleet_manager" data-bs-toggle="modal" data-bs-target="#addGeofenceModal">
+            <i class="bi bi-plus-circle me-1"></i>Deploy Geofence
+          </button>
+        </div>
+      </header>
+
+      <!-- SPLIT VIEWPORT -->
+      <div class="geofence-viewport">
+        <!-- SIDEBAR -->
+        <div class="geofence-sidebar">
+          <div class="p-3 border-bottom border-secondary border-opacity-10">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="fw-bold text-white small text-uppercase">Configured Zones</span>
+              <button class="btn btn-xs btn-outline-secondary" onclick="loadGeofences()">Refresh</button>
+            </div>
+            <small class="text-muted">Click map to auto-fill coordinates</small>
+          </div>
+
+          <!-- Geofence List -->
+          <div id="geofence-list" class="flex-grow-1 overflow-y-auto">
+            <div class="text-center py-4 text-muted">
+              <div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading zones...
+            </div>
+          </div>
+
+          <!-- POINT CONTAINMENT TESTING ACCORDION -->
+          <div class="p-3 border-top border-secondary border-opacity-10 bg-dark bg-opacity-50">
+            <h6 class="fw-bold text-white small mb-2">
+              <i class="bi bi-geo-alt-fill text-info me-1"></i>Test Coordinates Inside Geofence
+            </h6>
+            <form id="check-point-form">
+              <div class="mb-2">
+                <select id="test-fence-select" class="form-select form-select-sm" required>
+                  <option value="">-- Choose Geofence --</option>
+                </select>
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-6">
+                  <input type="number" step="any" id="test-lat" class="form-control form-control-sm" placeholder="Latitude" value="19.0760" required>
+                </div>
+                <div class="col-6">
+                  <input type="number" step="any" id="test-lng" class="form-control form-control-sm" placeholder="Longitude" value="72.8777" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-sm btn-outline-info w-100">
+                <i class="bi bi-check2-circle me-1"></i>Verify Containment
+              </button>
+              <div id="test-result-alert" class="alert mt-2 p-2 small fade" role="alert" style="display: none;"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- LEAFLET MAP -->
+        <div class="geofence-map-container">
+          <div id="geofence-map" style="width: 100%; height: 100%;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ADD GEOFENCE MODAL -->
+  <div class="modal fade" id="addGeofenceModal" tabindex="-1" aria-labelledby="addFenceTitle" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="add-geofence-form">
+          <div class="modal-header">
+            <h5 class="modal-title fw-bold text-white" id="addFenceTitle">
+              <i class="bi bi-bounding-box text-primary me-2"></i>Create Circular Geofence
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label small text-muted text-uppercase fw-semibold">Geofence Zone Name *</label>
+              <input type="text" id="fence-name" class="form-control" placeholder="JNPT Port Freight Terminal" required>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Center Latitude *</label>
+                <input type="number" step="any" id="fence-lat" class="form-control" value="18.9500" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Center Longitude *</label>
+                <input type="number" step="any" id="fence-lng" class="form-control" value="72.9500" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label small text-muted text-uppercase fw-semibold mb-0">Perimeter Radius</label>
+                <span id="fence-radius-display" class="badge bg-primary">1500m</span>
+              </div>
+              <input type="range" id="fence-radius" class="form-range" min="100" max="15000" step="100" value="1500">
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-muted text-uppercase fw-semibold">Border / Fill Color</label>
+                <input type="color" id="fence-color" class="form-control form-control-color w-100" value="#3B82F6">
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted text-uppercase fw-semibold">Zone Notes &amp; Entry Rules</label>
+              <textarea id="fence-desc" class="form-control" rows="2" placeholder="Alert on unauthorized egress after 22:00"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Deploy Geofence</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/map.js"></script>
+  <script src="assets/js/geofences.js"></script>
+</body>
+</html>
