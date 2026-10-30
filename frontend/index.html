@@ -1,371 +1,294 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Package Tracking &mdash; Transport GPS</title>
-  
-  <!-- Favicon & Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Bootstrap Icons & Leaflet CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-  <!-- Pixel-Perfect Dashboard Stylesheet -->
-  <link rel="stylesheet" href="assets/css/tracker-ui.css">
+  <title>Dashboard &mdash; Transport GPS Tracking</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
 </head>
-<body class="tracker-body">
+<body>
+  <div class="sidebar-overlay"></div>
 
-  <!-- TOP VIEW MODE TOGGLE & QUICK ACCESS -->
-  <div class="view-mode-bar">
-    <a href="/index-legacy.html" class="view-btn" title="View Classic Fleet Dashboard">
-      <i class="bi bi-speedometer2"></i> Classic Dashboard
-    </a>
-    <button id="btn-mode-device" class="view-btn active" title="Device Frame Mockup">
-      <i class="bi bi-tablet"></i> Frame View
-    </button>
-    <button id="btn-mode-full" class="view-btn" title="Fullscreen Native Dashboard">
-      <i class="bi bi-arrows-fullscreen"></i> Fullscreen
-    </button>
-  </div>
-
-  <!-- TABLET DEVICE CONTAINER (AS IN MOCKUP) -->
-  <div class="device-container">
-    
-    <!-- LEFT FLOATING DARK SIDEBAR PILL -->
-    <aside class="tracker-sidebar">
-      <div class="sidebar-top">
-        <!-- Stylized Logo Mark Button -->
-        <button class="brand-logo-btn" title="Transport GPS" onclick="window.location.reload()">
-          <!-- Stylized geometric N / slash logo matching the image -->
-          <svg class="brand-logo-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 5.5L18 18.5" stroke="#121316" stroke-width="3" stroke-linecap="round"/>
-            <circle cx="6" cy="5.5" r="2.5" fill="#121316"/>
-            <circle cx="18" cy="18.5" r="2.5" fill="#121316"/>
-            <path d="M6 8.5V5.5H9.5" stroke="#121316" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M18 15.5V18.5H14.5" stroke="#121316" stroke-width="2.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <!-- Vertical Navigation List -->
-        <nav class="sidebar-nav-list">
-          <!-- Home -->
-          <a href="/live-tracking.html" class="sidebar-nav-item" title="Live Fleet Map">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
-          </a>
-
-          <!-- Active Dashboard Grid (Selected State) -->
-          <a href="/index.html" class="sidebar-nav-item active" title="Active Shipments Dashboard">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="3" y="3" width="7.5" height="7.5" rx="2.5"/>
-              <rect x="13.5" y="3" width="7.5" height="7.5" rx="2.5"/>
-              <rect x="3" y="13.5" width="7.5" height="7.5" rx="2.5"/>
-              <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.5"/>
-            </svg>
-          </a>
-
-          <!-- Documents / Trips List -->
-          <a href="/trips.html" class="sidebar-nav-item" title="Trips & Cargo Manifest">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <line x1="10" y1="9" x2="8" y2="9"></line>
-            </svg>
-          </a>
-
-          <!-- Settings Gear -->
-          <a href="/settings.html" class="sidebar-nav-item" title="System Settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-          </a>
-        </nav>
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <aside class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="bi bi-truck-front-fill"></i>
+        </div>
+        <div class="brand-text">
+          <h5>Transport GPS</h5>
+          <small class="text-muted">Fleet Intelligence v1.0</small>
+        </div>
       </div>
 
-      <!-- Bottom Logout -->
-      <div class="sidebar-bottom">
-        <a href="/login.html" class="sidebar-logout-btn" title="Sign Out">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
+      <nav class="sidebar-nav">
+        <div class="nav-section-title">Operations</div>
+        <a href="/index.html" class="nav-item-link active">
+          <i class="bi bi-speedometer2"></i> Dashboard
         </a>
+        <a href="/live-tracking.html" class="nav-item-link">
+          <i class="bi bi-broadcast"></i> Live Map
+        </a>
+        <a href="/playback.html" class="nav-item-link">
+          <i class="bi bi-play-circle"></i> Route Playback
+        </a>
+        <a href="/trips.html" class="nav-item-link">
+          <i class="bi bi-signpost-split"></i> Trips & Cargo
+        </a>
+
+        <div class="nav-section-title">Fleet Assets</div>
+        <a href="/vehicles.html" class="nav-item-link">
+          <i class="bi bi-truck"></i> Vehicles & Trucks
+        </a>
+        <a href="/drivers.html" class="nav-item-link">
+          <i class="bi bi-person-badge"></i> Drivers Roster
+        </a>
+        <a href="/companies.html" class="nav-item-link">
+          <i class="bi bi-buildings"></i> Clients & Depots
+        </a>
+        <a href="/geofences.html" class="nav-item-link">
+          <i class="bi bi-bounding-box-circles"></i> Geofences
+        </a>
+
+        <div class="nav-section-title">Safety & Reports</div>
+        <a href="/alerts.html" class="nav-item-link">
+          <i class="bi bi-exclamation-triangle"></i> Incident Alerts
+        </a>
+        <a href="/reports.html" class="nav-item-link">
+          <i class="bi bi-file-earmark-excel"></i> Reports & Export
+        </a>
+        <a href="/users.html" class="nav-item-link" data-min-role="fleet_manager">
+          <i class="bi bi-people"></i> Users & Roles
+        </a>
+        <a href="/settings.html" class="nav-item-link">
+          <i class="bi bi-gear"></i> System Settings
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2 overflow-hidden">
+            <div class="kpi-icon-wrap kpi-icon-blue" style="width: 34px; height: 34px; font-size: 1rem;">
+              <i class="bi bi-person"></i>
+            </div>
+            <div class="text-truncate">
+              <div class="small fw-bold text-white text-truncate current-user-name">Loading...</div>
+              <div class="text-dim" style="font-size: 0.7rem;"><span class="current-user-role"></span></div>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-danger btn-logout" title="Sign Out">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
       </div>
     </aside>
 
-    <!-- MAIN RIGHT CONTENT SECTION -->
-    <main class="tracker-main">
-      
-      <!-- TOP HEADER (SEARCH & PROFILE) -->
-      <header class="tracker-header">
-        <!-- Search Input -->
-        <div class="search-container">
-          <i class="bi bi-search search-icon"></i>
-          <input type="text" id="dashboard-search-input" class="search-input-pill" placeholder="Search" autocomplete="off">
+    <!-- MAIN APP CONTENT -->
+    <main class="app-main">
+      <!-- TOPBAR -->
+      <header class="app-topbar">
+        <div class="d-flex align-items-center gap-3">
+          <button id="sidebar-toggle-btn" class="btn btn-sm btn-outline-secondary d-lg-none" aria-label="Toggle menu">
+            <i class="bi bi-list fs-5"></i>
+          </button>
+          <div class="topbar-title">
+            <h4>Operations Overview</h4>
+          </div>
         </div>
 
-        <!-- Right Profile Area -->
-        <div class="header-right">
-          <!-- Notification Bell -->
-          <button class="bell-btn" title="Notifications" aria-label="Notifications">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#121316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            <span class="bell-badge-count">2</span>
-          </button>
+        <div class="topbar-actions">
+          <a href="/alerts.html" class="btn btn-sm btn-outline-warning position-relative" title="Active Alerts">
+            <i class="bi bi-bell-fill"></i>
+            <span id="topbar-alerts-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              <span id="kpi-alerts-count">0</span>
+            </span>
+          </a>
 
-          <!-- User Pill -->
-          <div class="user-profile-btn">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Ella Doer" class="user-avatar-img">
-            <span class="user-name-text">Ella Doer</span>
-            <i class="bi bi-chevron-down dropdown-chevron"></i>
+          <div class="d-none d-md-flex align-items-center gap-2 px-3 py-1 bg-dark rounded-pill border border-secondary border-opacity-25">
+            <span class="status-badge status-active"></span>
+            <span class="small text-muted">Live Telemetry</span>
           </div>
+
+          <button class="btn btn-sm btn-outline-light btn-logout">
+            <i class="bi bi-box-arrow-right me-1"></i>Logout
+          </button>
         </div>
       </header>
 
-      <!-- TWO-COLUMN DASHBOARD GRID -->
-      <div class="dashboard-grid">
-        
-        <!-- LEFT COLUMN: CARDS STACK -->
-        <div class="left-stack">
-          
-          <!-- SECTION 1: ADD NEW PACKAGE -->
-          <section class="card-add-package">
-            <!-- Decorative 3D geometric pastel background prism -->
-            <svg class="add-package-geometric-shape" viewBox="0 0 140 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M70 10L130 45V75L70 110L10 75V45L70 10Z" fill="url(#prismGrad)" opacity="0.35"/>
-              <path d="M70 10L130 45L70 65L10 45L70 10Z" fill="#ffffff" opacity="0.5"/>
-              <path d="M70 65V110L130 75V45L70 65Z" fill="#d8b4fe" opacity="0.45"/>
-              <path d="M70 65V110L10 75V45L70 65Z" fill="#f472b6" opacity="0.3"/>
-              <defs>
-                <linearGradient id="prismGrad" x1="10" y1="10" x2="130" y2="110" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#c084fc"/>
-                  <stop offset="1" stop-color="#f472b6"/>
-                </linearGradient>
-              </defs>
-            </svg>
-
-            <div class="card-add-package-content">
-              <h2 class="card-title-lg">Add new package</h2>
-              <p class="card-subtitle">Fill out the form and create new package</p>
-              
-              <form id="new-package-form" class="package-input-wrapper">
-                <input type="text" id="new-package-input" class="package-input" placeholder="Enter Tracking Number" required>
-                <button type="submit" class="package-submit-btn" title="Create Package">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </button>
-              </form>
+      <!-- CONTENT BODY -->
+      <div class="content-body">
+        <!-- KPI METRICS ROW -->
+        <div id="kpi-section" class="row g-3 mb-4">
+          <div class="col-sm-6 col-xl-3">
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-title">Total Fleet Trucks</span>
+                <div class="kpi-icon-wrap kpi-icon-blue"><i class="bi bi-truck"></i></div>
+              </div>
+              <div class="kpi-value" id="kpi-total-vehicles">0</div>
+              <div class="kpi-subtext"><span class="text-success"><i class="bi bi-check2"></i> Registered Units</span></div>
             </div>
-          </section>
+          </div>
 
-          <!-- SECTION 2: ACTIVE TRACKING PACKAGE CARD -->
-          <section class="card-active-tracking">
-            <!-- Header -->
-            <div class="active-tracking-header">
-              <div>
-                <span class="tracking-num-label">Tracking Number</span>
-                <div id="active-tracking-num" class="tracking-num-val">KG3200L3122324GF</div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-title">Active Moving Now</span>
+                <div class="kpi-icon-wrap kpi-icon-green"><i class="bi bi-geo-alt-fill"></i></div>
               </div>
-              <div id="active-status-badge" class="status-pill">
-                <span class="status-dot transit"></span> In Transit
-              </div>
+              <div class="kpi-value text-success" id="kpi-active-vehicles">0</div>
+              <div class="kpi-subtext">Vehicles reporting motion</div>
             </div>
+          </div>
 
-            <!-- Route Timeline -->
-            <div class="tracking-route-timeline">
-              <div class="route-point">
-                <span class="route-label">Departure</span>
-                <span id="active-departure-time" class="route-time">22.08.21 16:40 PM</span>
+          <div class="col-sm-6 col-xl-3">
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-title">Idle &amp; Maintenance</span>
+                <div class="kpi-icon-wrap kpi-icon-amber"><i class="bi bi-tools"></i></div>
               </div>
-
-              <div class="route-line-connector">
-                <div class="dashed-line"></div>
-                <!-- Black Location Pin -->
-                <svg class="route-pin-icon" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 0C5.37258 0 0 5.37258 0 12C0 19.5 12 30 12 30C12 30 24 19.5 24 12C24 5.37258 18.6274 0 12 0Z" fill="#121316"/>
-                  <circle cx="12" cy="11" r="4.5" fill="#FFFFFF"/>
-                </svg>
-                <div class="dashed-line"></div>
+              <div class="kpi-value text-warning">
+                <span id="kpi-idle-vehicles">0</span> <small class="fs-6 text-muted">/ <span id="kpi-maint-vehicles">0</span></small>
               </div>
-
-              <div class="route-point arrival">
-                <span class="route-label">Arrival</span>
-                <span id="active-arrival-time" class="route-time">24.08.21 12:30 PM</span>
-              </div>
+              <div class="kpi-subtext">Parked / In Workshop</div>
             </div>
+          </div>
 
-            <!-- 4-Column Metadata Grid -->
-            <div class="tracking-meta-grid">
-              <div>
-                <span class="meta-item-label">Customer</span>
-                <span id="active-customer-val" class="meta-item-val">Ella Doer</span>
+          <div class="col-sm-6 col-xl-3">
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span class="kpi-title">Fleet Distance Log</span>
+                <div class="kpi-icon-wrap kpi-icon-blue"><i class="bi bi-signpost-2"></i></div>
               </div>
-              <div>
-                <span class="meta-item-label">Price</span>
-                <span id="active-price-val" class="meta-item-val">1334 $</span>
-              </div>
-              <div>
-                <span class="meta-item-label">Description</span>
-                <span id="active-desc-val" class="meta-item-val">Clothes</span>
-              </div>
-              <div>
-                <span class="meta-item-label">Weight</span>
-                <span id="active-weight-val" class="meta-item-val">1,2 kg</span>
-              </div>
+              <div class="kpi-value fs-3" id="kpi-total-distance">0.0 km</div>
+              <div class="kpi-subtext"><span id="kpi-total-trips">0</span> recorded journeys</div>
             </div>
-
-            <!-- Driver Row -->
-            <div class="tracking-driver-row">
-              <div class="driver-profile-info">
-                <img id="active-driver-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=120&q=80" alt="John Green" class="driver-avatar-img">
-                <div>
-                  <span class="driver-label">Driver</span>
-                  <span id="active-driver-name" class="driver-name">John Green</span>
-                </div>
-              </div>
-
-              <div class="driver-actions">
-                <button id="driver-action-call" class="driver-action-btn" title="Call Driver">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                  </svg>
-                </button>
-                <button id="driver-action-message" class="driver-action-btn" title="Message Driver">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <!-- SECTION 3: OTHER SHIPMENTS LIST -->
-          <section class="card-shipments-list">
-            <div id="shipments-list-container" class="shipments-scroll-area">
-              <!-- Dynamically rendered or pre-rendered rows -->
-            </div>
-          </section>
-
+          </div>
         </div>
 
-        <!-- RIGHT COLUMN: INTERACTIVE MAP -->
-        <div class="right-map-card">
-          
-          <!-- Leaflet Interactive Map Canvas -->
-          <div id="tracker-map-view"></div>
-
-          <!-- High-Clarity Vector Map Overlay (Presidio, San Francisco matching screenshot) -->
-          <svg class="map-canvas-layer" viewBox="0 0 600 680" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="routeGradient" x1="210" y1="460" x2="410" y2="150" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#475569" stop-opacity="0.8"/>
-                <stop offset="0.6" stop-color="#1e293b"/>
-                <stop offset="1" stop-color="#0f172a"/>
-              </linearGradient>
-              <filter id="routeShadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.2"/>
-              </filter>
-            </defs>
-
-            <!-- Base Roads & Avenues -->
-            <path d="M-20 540 Q80 500 160 460 T320 340 T520 220 T620 160" stroke="#FFFFFF" stroke-width="26" stroke-linecap="round"/>
-            <path d="M-20 540 Q80 500 160 460 T320 340 T520 220 T620 160" stroke="#E2E8F0" stroke-width="28" stroke-linecap="round"/>
-
-            <path d="M140 680 L230 460 L330 330 L490 220" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round"/>
-            <path d="M140 680 L230 460 L330 330 L490 220" stroke="#E2E8F0" stroke-width="22" stroke-linecap="round"/>
-
-            <path d="M230 460 L450 540" stroke="#FFFFFF" stroke-width="15"/>
-            <path d="M330 330 L590 390" stroke="#FFFFFF" stroke-width="15"/>
-            <path d="M420 140 L490 220 L570 300" stroke="#FFFFFF" stroke-width="18"/>
-            <path d="M470 160 L590 200" stroke="#FFFFFF" stroke-width="13"/>
-
-            <!-- Connecting local roads -->
-            <path d="M360 280 L440 230" stroke="#FFFFFF" stroke-width="12"/>
-            <path d="M430 380 L520 320" stroke="#FFFFFF" stroke-width="12"/>
-
-            <!-- Street & Avenue Typography matching screenshot exactly -->
-            <text x="280" y="165" class="map-poi-label">The Walt Disney</text>
-            <text x="280" y="185" class="map-poi-label">Family Museum</text>
-
-            <text x="360" y="495" class="map-street-label" transform="rotate(-32, 360, 495)">Moraga Ave</text>
-            <text x="390" y="340" class="map-street-label" transform="rotate(-52, 390, 340)">Anza Ave</text>
-            <text x="420" y="360" class="map-street-label" transform="rotate(-52, 420, 360)">Keyes Ave</text>
-            <text x="435" y="375" class="map-street-label" transform="rotate(-52, 435, 375)">Mesa St</text>
-            <text x="455" y="385" class="map-street-label" transform="rotate(-52, 455, 385)">Funston Ave</text>
-            <text x="485" y="245" class="map-street-label" transform="rotate(-75, 485, 245)">Halleck St</text>
-            <text x="440" y="520" class="map-street-label" transform="rotate(-50, 440, 520)">Quarry Rd</text>
-            <text x="485" y="560" class="map-street-label" transform="rotate(-75, 485, 560)">Portola St</text>
-            <text x="545" y="210" class="map-street-label">Girard</text>
-            <text x="545" y="145" class="map-street-label">Ma...</text>
-            <text x="270" y="300" class="map-street-label">Dr</text>
-
-            <!-- Vector Route Path matching the screenshot -->
-            <g class="svg-fallback-route">
-              <!-- Smooth curved delivery route path -->
-              <path d="M 210 460 C 190 510, 180 570, 205 600 C 230 630, 240 610, 220 540 C 200 480, 230 420, 290 350 C 350 280, 410 210, 410 155" 
-                    fill="none" 
-                    stroke="url(#routeGradient)" 
-                    stroke-width="5.5" 
-                    stroke-linecap="round" 
-                    filter="url(#routeShadow)" />
-
-              <!-- Origin Radar Halo & Center Dot at Moraga Ave -->
-              <circle cx="210" cy="460" r="22" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-opacity="0.12" stroke-width="1.5"/>
-              <circle cx="210" cy="460" r="5" fill="#121316"/>
-
-              <!-- Destination Black Teardrop Pin at The Walt Disney Museum -->
-              <g transform="translate(397, 125)">
-                <path d="M13 0C5.82 0 0 5.82 0 13C0 21 13 32 13 32C13 32 26 21 26 13C26 5.82 20.18 0 13 0Z" fill="#121316"/>
-                <circle cx="13" cy="12" r="4.5" fill="#FFFFFF"/>
-              </g>
-            </g>
-          </svg>
-
-          <!-- Floating Active Package Status Card on Map (positioned above destination pin) -->
-          <div class="map-floating-status-card">
-            <span id="map-floating-code" class="floating-code">KG3200L3122324GF</span>
-            <div id="map-floating-status" class="status-pill" style="padding: 2px 8px; font-size: 0.65rem;">
-              <span class="status-dot transit"></span> In Transit
+        <!-- CHARTS ROW -->
+        <div class="row g-4 mb-4">
+          <div class="col-lg-5">
+            <div class="custom-table-card p-4 h-100">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-white mb-0">Fleet Allocation Status</h5>
+                <span class="small text-muted"><i class="bi bi-pie-chart me-1"></i>Real-time</span>
+              </div>
+              <div style="height: 240px; position: relative;">
+                <canvas id="fleetStatusChart"></canvas>
+              </div>
             </div>
           </div>
 
-          <!-- Bottom-Right Zoom Controls Pill -->
-          <div class="map-zoom-controls-pill">
-            <button id="map-btn-zoom-in" class="map-zoom-btn" title="Zoom in">+</button>
-            <div class="zoom-divider"></div>
-            <button id="map-btn-zoom-out" class="map-zoom-btn" title="Zoom out">&minus;</button>
+          <div class="col-lg-7">
+            <div class="custom-table-card p-4 h-100">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-white mb-0">Active Vehicle Speed Distribution</h5>
+                <span class="small text-muted"><i class="bi bi-bar-chart me-1"></i>Current km/h</span>
+              </div>
+              <div style="height: 240px; position: relative;">
+                <canvas id="speedDistributionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK ACTIONS BAR -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-3 col-6">
+            <a href="/live-tracking.html" class="btn btn-outline-info w-100 py-3 d-flex flex-column align-items-center gap-1 rounded-3">
+              <i class="bi bi-broadcast fs-4"></i>
+              <span class="fw-semibold small">Open Live Map</span>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="/vehicles.html" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center gap-1 rounded-3">
+              <i class="bi bi-plus-circle fs-4"></i>
+              <span class="fw-semibold small">Manage Fleet</span>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="/trips.html" class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center gap-1 rounded-3">
+              <i class="bi bi-signpost-split fs-4"></i>
+              <span class="fw-semibold small">Trips &amp; Cargo</span>
+            </a>
+          </div>
+          <div class="col-md-3 col-6">
+            <a href="/reports.html" class="btn btn-outline-warning w-100 py-3 d-flex flex-column align-items-center gap-1 rounded-3">
+              <i class="bi bi-file-earmark-excel fs-4"></i>
+              <span class="fw-semibold small">Excel Exports</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- RECENT ALERTS & LIVE FLEET SNAPSHOT ROW -->
+        <div class="row g-4">
+          <!-- Recent Incidents -->
+          <div class="col-lg-5">
+            <div class="custom-table-card h-100">
+              <div class="p-3 border-bottom border-secondary border-opacity-10 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-white mb-0">
+                  <i class="bi bi-exclamation-triangle text-warning me-2"></i>Recent Safety Incidents
+                </h6>
+                <a href="/alerts.html" class="small text-info text-decoration-none">View All &rarr;</a>
+              </div>
+              <div id="recent-alerts-list" class="p-2">
+                <div class="text-center py-4 text-muted">
+                  <div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading alerts...
+                </div>
+              </div>
+            </div>
           </div>
 
+          <!-- Live Fleet Telemetry Snapshot -->
+          <div class="col-lg-7">
+            <div class="custom-table-card h-100">
+              <div class="p-3 border-bottom border-secondary border-opacity-10 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold text-white mb-0">
+                  <i class="bi bi-truck text-primary me-2"></i>Live Vehicle Telemetry
+                </h6>
+                <a href="/live-tracking.html" class="small text-info text-decoration-none">Full Fleet Map &rarr;</a>
+              </div>
+              <div class="table-responsive">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Truck Reg</th>
+                      <th>Driver</th>
+                      <th>Status</th>
+                      <th>Speed</th>
+                      <th>Last Seen</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboard-live-tbody">
+                    <tr><td colspan="5" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Connecting to live stream...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
-
     </main>
-
   </div>
 
-  <!-- ACTION TOAST NOTIFICATION -->
-  <div id="tracker-toast-notice" class="tracker-toast">
-    <i class="bi bi-check-circle-fill"></i>
-    <span id="tracker-toast-msg">Action completed</span>
-  </div>
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;"></div>
 
   <!-- Scripts -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="assets/js/tracker-dashboard.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/dashboard.js"></script>
 </body>
 </html>
