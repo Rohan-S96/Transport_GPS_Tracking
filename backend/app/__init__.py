@@ -75,4 +75,11 @@ def create_app(config_name=None):
     def expired_token_callback(jwt_header, jwt_payload):
         return jsonify({"success": False, "error": "Token has expired", "code": 401}), 401
 
+    # Ensure all tables exist in database (PostgreSQL / SQLite)
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.warning(f"db.create_all() notice: {e}")
+
     return app

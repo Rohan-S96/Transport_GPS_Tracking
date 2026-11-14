@@ -89,5 +89,8 @@ def handle_service_errors(fn):
             # Log full traceback in development
             import traceback
             traceback.print_exc()
-            return error_response("An internal error occurred", 500, details=str(e))
+            err_str = str(e)
+            if "unique constraint" in err_str.lower() or "duplicate key" in err_str.lower() or "already exists" in err_str.lower():
+                return error_response("An account with this email address already exists. Please sign in.", 409)
+            return error_response("An internal error occurred", 500, details=err_str)
     return wrapper

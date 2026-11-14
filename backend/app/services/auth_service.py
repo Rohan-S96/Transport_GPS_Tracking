@@ -52,19 +52,30 @@ class AuthService:
         )
         user.set_password(password)
         db.session.add(user)
+        db.session.flush()
 
-        # Audit log
-        log = AuditLog(
-            user_id=None,
-            organization_id=org.id if org else None,
-            action="user_register",
-            entity_type="user",
-            entity_id=user.id,
-            detail=json.dumps({"email": email, "role": role}),
-            ip_address=_get_remote_ip(),
-        )
-        db.session.add(log)
-        db.session.commit()
+        # Audit log (safely wrapped so audit failure never aborts user registration)
+        try:
+            log = AuditLog(
+                user_id=user.id,
+                organization_id=org.id if org else None,
+                action="user_register",
+                entity_type="user",
+                entity_id=user.id,
+                detail=json.dumps({"email": email, "role": role}),
+                ip_address=_get_remote_ip(),
+            )
+            db.session.add(log)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            # If audit logging fails, persist user and org directly
+            if org and not db.session.get(Organization, org.id):
+                db.session.add(org)
+            if not db.session.get(User, user.id):
+                db.session.add(user)
+            db.session.commit()
+
         return user
 
     @staticmethod
@@ -81,18 +92,23 @@ class AuthService:
 
         user.last_login_at = datetime.now(timezone.utc)
 
-        # Audit login
-        log = AuditLog(
-            user_id=user.id,
-            organization_id=user.organization_id,
-            action="user_login",
-            entity_type="user",
-            entity_id=user.id,
-            ip_address=_get_remote_ip(),
-            user_agent=_get_user_agent(),
-        )
-        db.session.add(log)
-        db.session.commit()
+        # Audit login (safely wrapped)
+        try:
+            log = AuditLog(
+                user_id=user.id,
+                organization_id=user.organization_id,
+                action="user_login",
+                entity_type="user",
+                entity_id=user.id,
+                ip_address=_get_remote_ip(),
+                user_agent=_get_user_agent(),
+            )
+            db.session.add(log)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            user.last_login_at = datetime.now(timezone.utc)
+            db.session.commit()
 
         additional_claims = {
             "role": user.role,

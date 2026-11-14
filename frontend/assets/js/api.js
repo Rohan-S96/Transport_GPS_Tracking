@@ -56,7 +56,7 @@ const ApiClient = {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const errMsg = data.error || data.message || `Request failed with status ${response.status}`;
+        const errMsg = data.details || data.error || data.message || `Request failed with status ${response.status}`;
         throw new Error(errMsg);
       }
       return data;
