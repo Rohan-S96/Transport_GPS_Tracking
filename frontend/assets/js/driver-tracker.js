@@ -590,3 +590,4 @@ function headingToCompass(deg) {
   const index = Math.round(((deg %= 360) < 0 ? deg + 360 : deg) / 45) % 8;
   return directions[index];
 }
+
