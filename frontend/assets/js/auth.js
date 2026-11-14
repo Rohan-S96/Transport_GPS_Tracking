@@ -37,7 +37,7 @@ const Auth = {
   requireAuth() {
     if (!this.isAuthenticated()) {
       const current = window.location.pathname;
-      if (!current.includes('login.html')) {
+      if (!current.includes('login.html') && !current.includes('register.html') && !current.includes('driver-tracker.html')) {
         window.location.href = '/login.html';
       }
       return false;
@@ -62,7 +62,17 @@ const Auth = {
   },
 
   async register(payload) {
-    return await ApiClient.post('/auth/register', payload);
+    const res = await ApiClient.post('/auth/register', payload);
+    if (res.success && res.data) {
+      if (res.data.access_token) {
+        ApiClient.setToken(res.data.access_token, res.data.refresh_token);
+      }
+      const userData = res.data.user || res.data;
+      if (userData && userData.email) {
+        localStorage.setItem(CONFIG.STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+      }
+    }
+    return res;
   },
 
   logout() {

@@ -91,9 +91,16 @@
               <label class="form-check-label small text-muted" for="remember-me">Remember credentials</label>
             </div>
 
-            <button type="submit" id="btn-login-submit" class="btn btn-primary w-100 py-2 fs-6">
+            <button type="submit" id="btn-login-submit" class="btn btn-primary w-100 py-2 fs-6 mb-3">
               <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to Fleet
             </button>
+
+            <div class="text-center text-muted small">
+              Don't have an account? 
+              <a href="/register.html" class="text-primary text-decoration-none fw-semibold">
+                Create an Account
+              </a>
+            </div>
           </form>
         </div>
 
@@ -167,6 +174,16 @@
       // If already logged in, redirect to dashboard
       Auth.redirectIfAuthenticated();
 
+      // Check URL parameters for tab=register
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('tab') === 'register' || window.location.hash === '#register') {
+        const regTab = document.getElementById('register-tab');
+        if (regTab) {
+          const tab = new bootstrap.Tab(regTab);
+          tab.show();
+        }
+      }
+
       // Check API health status
       const statusBadge = document.getElementById('api-status-badge');
       try {
@@ -229,11 +246,18 @@
 
           if (res.success) {
             Utils.showToast('Account created! Logging in...', 'success');
-            // Auto login
-            await Auth.login(email, password);
-            setTimeout(() => {
-              window.location.href = '/index.html';
-            }, 600);
+            if (Auth.isAuthenticated()) {
+              setTimeout(() => {
+                window.location.href = '/index.html';
+              }, 600);
+            } else {
+              await Auth.login(email, password);
+              setTimeout(() => {
+                window.location.href = '/index.html';
+              }, 600);
+            }
+          } else {
+            throw new Error(res.error || res.message || 'Registration failed');
           }
         } catch (err) {
           Utils.showToast(err.message || 'Registration failed', 'danger');

@@ -21,6 +21,22 @@ def test_login_invalid_credentials(client):
     assert res.get_json()["success"] is False
 
 
+def test_register_user_success(client):
+    res = client.post("/api/v1/auth/register", json={
+        "email": "newmanager@fleetcorp.com",
+        "password": "Password123!",
+        "first_name": "New",
+        "last_name": "Manager",
+        "organization_name": "New Logistics Ltd",
+        "role": "fleet_manager"
+    })
+    assert res.status_code == 201
+    json_data = res.get_json()
+    assert json_data["success"] is True
+    assert json_data["data"]["email"] == "newmanager@fleetcorp.com"
+
+
+
 def test_get_current_user_profile(client, auth_headers):
     res = client.get("/api/v1/auth/me", headers=auth_headers)
     assert res.status_code == 200

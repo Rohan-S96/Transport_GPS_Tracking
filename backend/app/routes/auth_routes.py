@@ -42,7 +42,15 @@ def register():
         org_name=data.get("organization_name"),
         role=role,
     )
-    return success_response(user.to_dict(), message="Account created successfully", code=201)
+    auth_data = AuthService.authenticate_user(data["email"], password)
+    response_data = {
+        **user.to_dict(),
+        "access_token": auth_data["access_token"],
+        "refresh_token": auth_data["refresh_token"],
+        "token_type": "Bearer",
+        "user": user.to_dict(),
+    }
+    return success_response(response_data, message="Account created successfully", code=201)
 
 
 @auth_bp.route("/login", methods=["POST"])
