@@ -129,6 +129,10 @@ class TrackingService:
                 .order_by(desc(GPSTelemetry.recorded_at))
                 .first()
             )
+            is_hardware = bool(
+                v.gps_device and v.gps_device.last_seen_at and latest and latest.recorded_at and
+                abs((latest.recorded_at - v.gps_device.last_seen_at).total_seconds()) < 300
+            )
             fleet_data.append({
                 "vehicle_id": v.id,
                 "registration_number": v.registration_number,
@@ -145,6 +149,9 @@ class TrackingService:
                 "fuel_level_pct": latest.fuel_level_pct if latest else None,
                 "odometer_km": round(v.current_odometer_km, 1),
                 "last_updated": latest.recorded_at.isoformat() if latest else None,
+                "tracking_source": "hardware_gps" if is_hardware else "mobile_phone",
+                "has_hardware_device": bool(v.gps_device),
+                "device_imei": v.gps_device.imei if v.gps_device else None,
             })
 
         return fleet_data
@@ -161,6 +168,10 @@ class TrackingService:
             .order_by(desc(GPSTelemetry.recorded_at))
             .first()
         )
+        is_hardware = bool(
+            vehicle.gps_device and vehicle.gps_device.last_seen_at and latest and latest.recorded_at and
+            abs((latest.recorded_at - vehicle.gps_device.last_seen_at).total_seconds()) < 300
+        )
         return {
             "vehicle_id": vehicle.id,
             "registration_number": vehicle.registration_number,
@@ -176,6 +187,9 @@ class TrackingService:
             "fuel_level_pct": latest.fuel_level_pct if latest else None,
             "odometer_km": round(vehicle.current_odometer_km, 1),
             "last_updated": latest.recorded_at.isoformat() if latest else None,
+            "tracking_source": "hardware_gps" if is_hardware else "mobile_phone",
+            "has_hardware_device": bool(vehicle.gps_device),
+            "device_imei": vehicle.gps_device.imei if vehicle.gps_device else None,
         }
 
     # ─── History / Playback ────────────────────────────────────────────────────
@@ -311,17 +325,23 @@ class TrackingService:
     def _resolve_vehicle(data: dict) -> Vehicle:
         vehicle_id = data.get("vehicle_id")
         device_imei = data.get("device_imei")
+        registration_number = data.get("registration_number")
 
         vehicle = None
         if vehicle_id:
             vehicle = Vehicle.query.get(vehicle_id)
         elif device_imei:
-            device = GPSDevice.query.filter_by(imei=str(device_imei)).first()
+            device = GPSDevice.query.filter_by(imei=str(device_imei).strip()).first()
             if device:
                 vehicle = device.vehicle
+        elif registration_number:
+            vehicle = Vehicle.query.filter(
+                db.func.lower(Vehicle.registration_number) == str(registration_number).strip().lower()
+            ).first()
+
         if not vehicle:
             raise ValueError(
-                "Vehicle not found. Provide a valid vehicle_id or device_imei."
+                "Vehicle not found. Provide a valid vehicle_id, device_imei, or registration_number."
             )
         return vehicle
 

@@ -24,3 +24,30 @@ def test_telemetry_ingest_and_overspeed_detection(client):
     assert res.status_code == 201
     assert res.get_json()["data"]["alerts_generated"] >= 1
 
+
+def test_mobile_tracking_by_registration_number(client):
+    """Test mobile driver GPS telemetry ingest using only registration number."""
+    res = client.post("/api/v1/gps/locations", json={
+        "registration_number": "TEST-REG-01",
+        "latitude": 18.5204,
+        "longitude": 73.8567,
+        "speed_kmh": 42.0,
+        "heading": 180.0,
+        "battery_pct": 88.0,
+        "ignition": True
+    })
+    assert res.status_code == 201
+    body = res.get_json()
+    assert body["success"] is True
+    assert body["data"]["registration_number"] == "TEST-REG-01"
+
+
+def test_public_vehicle_roster_endpoint(client):
+    """Test public vehicle roster used by driver mobile web tracker without auth."""
+    res = client.get("/api/v1/vehicles/public-roster")
+    assert res.status_code == 200
+    data = res.get_json()["data"]
+    assert len(data) >= 1
+    assert any(v["registration_number"] == "TEST-REG-01" for v in data)
+
+

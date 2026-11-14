@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Driver GPS Tracker &mdash; Transport GPS Tracking</title>
+
+  <!-- Bootstrap 5, Icons & Fonts -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App Stylesheets -->
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+
+  <style>
+    :root {
+      --mobile-accent: #10b981;
+      --mobile-danger: #ef4444;
+      --mobile-warning: #f59e0b;
+    }
+
+    body.driver-body {
+      background-color: #090d16;
+      color: #f1f5f9;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .driver-header {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .pulse-dot.online {
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse-green 1.8s infinite;
+    }
+    .pulse-dot.offline {
+      background: #ef4444;
+    }
+    .pulse-dot.tracking {
+      background: #3b82f6;
+      box-shadow: 0 0 12px #3b82f6;
+      animation: pulse-blue 1.2s infinite;
+    }
+
+    @keyframes pulse-green {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.15); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    @keyframes pulse-blue {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.8); }
+      70% { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+
+    .cockpit-card {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .speedometer-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #38bdf8;
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+    }
+
+    .speedometer-unit {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .btn-track-action {
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      padding: 0.9rem 1.5rem;
+      letter-spacing: 0.03em;
+      transition: all 0.25s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    .btn-track-action:active {
+      transform: scale(0.98);
+    }
+
+    .mini-metric-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 14px;
+      padding: 0.75rem 0.9rem;
+    }
+    .mini-metric-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+    .mini-metric-lbl {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: #94a3b8;
+      letter-spacing: 0.05em;
+    }
+
+    #driver-mini-map {
+      height: 220px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    .transition-alert-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px dashed rgba(59, 130, 246, 0.35);
+      border-radius: 14px;
+      padding: 0.85rem;
+    }
+  </style>
+</head>
+<body class="driver-body">
+
+  <!-- TOP APP BAR -->
+  <header class="driver-header py-3 px-3">
+    <div class="container d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-2">
+        <div class="kpi-icon-wrap kpi-icon-blue" style="width: 36px; height: 36px; font-size: 1.1rem; border-radius: 10px;">
+          <i class="bi bi-truck-front-fill"></i>
+        </div>
+        <div>
+          <h6 class="mb-0 fw-bold text-white lh-1">Driver Mobile GPS</h6>
+          <small class="text-muted" style="font-size: 0.7rem;">Live Truck Transmitter</small>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <span id="network-badge" class="badge rounded-pill bg-dark border border-secondary px-2 py-1 text-light small d-flex align-items-center">
+          <span class="pulse-dot online" id="status-pulse-dot"></span>
+          <span id="network-status-text">Ready</span>
+        </span>
+        <a href="/live-tracking.html" class="btn btn-sm btn-outline-secondary" title="Open Fleet Dashboard">
+          <i class="bi bi-speedometer2"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="container py-3 flex-grow-1" style="max-width: 600px;">
+
+    <!-- TRUCK SELECTION & CONFIGURATION CARD -->
+    <div class="cockpit-card p-3 mb-3" id="setup-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="small fw-bold text-uppercase text-muted letter-spacing-1">
+          <i class="bi bi-truck me-1 text-primary"></i>Assigned Vehicle
+        </span>
+        <span class="badge bg-primary bg-opacity-20 text-info small" id="gps-type-tag">
+          <i class="bi bi-phone me-1"></i>Mobile Phone Mode
+        </span>
+      </div>
+
+      <!-- Truck Selector Dropdown -->
+      <div class="mb-3">
+        <label for="vehicle-select" class="form-label small text-muted">Select Truck Registration Number:</label>
+        <select id="vehicle-select" class="form-select form-select-lg bg-dark border-secondary text-white fw-bold">
+          <option value="">-- Choose Truck --</option>
+        </select>
+        <div class="form-text text-muted small" id="vehicle-hint">
+          Loading fleet vehicles...
+        </div>
+      </div>
+
+      <!-- Driver Identification (Optional) -->
+      <div class="row g-2 mb-3">
+        <div class="col-7">
+          <label for="driver-name-input" class="form-label small text-muted">Driver Name</label>
+          <input type="text" id="driver-name-input" class="form-control bg-dark border-secondary text-white" placeholder="e.g. Rajesh Kumar">
+        </div>
+        <div class="col-5">
+          <label for="driver-phone-input" class="form-label small text-muted">Mobile No.</label>
+          <input type="tel" id="driver-phone-input" class="form-control bg-dark border-secondary text-white" placeholder="98200XXXXX">
+        </div>
+      </div>
+
+      <!-- START / STOP TRACKING BUTTON -->
+      <button id="btn-toggle-tracking" class="btn btn-success btn-track-action w-100 d-flex align-items-center justify-content-center gap-2">
+        <i class="bi bi-play-circle-fill fs-4"></i>
+        <span>START GPS TRACKING</span>
+      </button>
+
+      <div class="text-center mt-2">
+        <small class="text-dim" style="font-size: 0.72rem;">
+          <i class="bi bi-shield-check text-success me-1"></i>High-Accuracy GPS &bull; Keep phone awake during transit
+        </small>
+      </div>
+    </div>
+
+    <!-- LIVE DRIVING COCKPIT (Visible when tracking or active) -->
+    <div class="cockpit-card p-3 mb-3" id="telemetry-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <span class="badge bg-success bg-opacity-25 text-success mb-1" id="tracking-active-badge">
+            <span class="pulse-dot tracking"></span> TRANSMITTING LIVE
+          </span>
+          <h5 class="mb-0 fw-bold text-white text-truncate" id="active-truck-name">MH-12-RN-4501</h5>
+        </div>
+        <div class="text-end">
+          <div class="small text-muted">Battery</div>
+          <div class="fw-bold text-white small" id="metric-battery">
+            <i class="bi bi-battery-charging text-success me-1"></i>--%
+          </div>
+        </div>
+      </div>
+
+      <!-- SPEEDOMETER -->
+      <div class="text-center py-2 mb-3">
+        <div class="speedometer-display" id="metric-speed">0</div>
+        <div class="speedometer-unit">KM / H SPEED</div>
+      </div>
+
+      <!-- 4-METRIC DASHBOARD GRID -->
+      <div class="row g-2 mb-3">
+        <div class="col-6">
+          <div class="mini-metric-box">
+            <div class="mini-metric-lbl"><i class="bi bi-geo-alt-fill text-info me-1"></i>GPS Accuracy</div>
+            <div class="mini-metric-val text-info" id="metric-accuracy">&plusmn; -- m</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mini-metric-box">
+            <div class="mini-metric-lbl"><i class="bi bi-signpost-split text-warning me-1"></i>Distance</div>
+            <div class="mini-metric-val text-warning" id="metric-distance">0.0 km</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mini-metric-box">
+            <div class="mini-metric-lbl"><i class="bi bi-compass text-light me-1"></i>Heading</div>
+            <div class="mini-metric-val" id="metric-heading">--&deg;</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="mini-metric-box">
+            <div class="mini-metric-lbl"><i class="bi bi-cloud-arrow-up text-success me-1"></i>Transmitted</div>
+            <div class="mini-metric-val text-success" id="metric-packets">0 pkts</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GPS CO-ORDINATES STRIP -->
+      <div class="p-2 rounded bg-black bg-opacity-40 border border-secondary border-opacity-25 d-flex justify-content-between align-items-center mb-3 font-monospace small">
+        <div class="text-muted">
+          <i class="bi bi-crosshair me-1"></i><span id="metric-coords">Waiting for GPS lock...</span>
+        </div>
+        <div class="text-dim" id="metric-last-ping">--</div>
+      </div>
+
+      <!-- MINI LEAFLET MAP PREVIEW -->
+      <div class="mb-2">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="small text-muted fw-semibold"><i class="bi bi-map me-1"></i>Live Route Breadcrumbs</span>
+          <button id="btn-recenter-map" class="btn btn-sm btn-link text-info p-0 text-decoration-none small">
+            <i class="bi bi-crosshair2 me-1"></i>Recenter
+          </button>
+        </div>
+        <div id="driver-mini-map"></div>
+      </div>
+    </div>
+
+    <!-- HARDWARE UPGRADE READINESS NOTICE -->
+    <div class="transition-alert-box mb-4">
+      <div class="d-flex gap-2">
+        <i class="bi bi-cpu-fill text-info fs-5 flex-shrink-0 mt-1"></i>
+        <div class="small">
+          <strong class="text-info d-block">Physical GPS Kit Ready System:</strong>
+          <span class="text-muted">
+            Currently tracking via this phone. When your hardware GPS devices arrive, simply mount them to the trucks and connect via IMEI &mdash; the system will transition automatically with zero downtime!
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container position-fixed bottom-0 start-50 translate-middle-x p-3" style="z-index: 9999;"></div>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/utils.js"></script>
+  <script src="assets/js/driver-tracker.js"></script>
+</body>
+</html>

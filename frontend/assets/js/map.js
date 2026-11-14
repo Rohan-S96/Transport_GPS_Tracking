@@ -76,6 +76,10 @@ class FleetMap {
           <span>${vehicle.battery_pct || 100}%</span>
         </div>
         <div class="vehicle-popup-stat">
+          <span>Tracking Source</span>
+          <span>${vehicle.tracking_source === 'hardware_gps' ? '<i class="bi bi-cpu text-info me-1"></i>Hardware GPS' : '<i class="bi bi-phone text-success me-1"></i>Driver Mobile'}</span>
+        </div>
+        <div class="vehicle-popup-stat">
           <span>Last Seen</span>
           <span>${Utils.formatDate(vehicle.last_updated || (vehicle.last_known_telemetry ? vehicle.last_known_telemetry.recorded_at : ''))}</span>
         </div>

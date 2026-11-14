@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Telemetry simulator modal setup
   setupSimulator();
 
+  // Mobile phone tracker modal setup
+  setupMobileTrackModal();
+
   // Start continuous polling (every 4s)
   pollTimer = setInterval(fetchLivePositions, CONFIG.POLL_INTERVAL_MS);
 });
@@ -143,15 +146,24 @@ function updateLiveFleetList(vehicles) {
          onmouseout="this.style.background='transparent'">
       <div class="d-flex justify-content-between align-items-center mb-1">
         <span class="fw-bold text-white"><i class="bi bi-truck me-1 text-primary"></i>${v.registration_number}</span>
-        ${Utils.getStatusBadge(v.status)}
+        <div class="d-flex align-items-center gap-1">
+          <span class="badge ${v.tracking_source === 'hardware_gps' ? 'bg-primary' : 'bg-success'} bg-opacity-20 ${v.tracking_source === 'hardware_gps' ? 'text-info' : 'text-success'}" style="font-size: 0.65rem;">
+            ${v.tracking_source === 'hardware_gps' ? '<i class="bi bi-cpu"></i> GPS Kit' : '<i class="bi bi-phone"></i> Phone'}
+          </span>
+          ${Utils.getStatusBadge(v.status)}
+        </div>
       </div>
       <div class="d-flex justify-content-between text-muted small mb-1">
         <span><i class="bi bi-speedometer2 me-1"></i>${Utils.formatSpeed(v.speed_kmh)}</span>
         <span><i class="bi bi-person me-1"></i>${v.driver_name || 'Unassigned'}</span>
       </div>
-      <div class="d-flex justify-content-between text-dim small">
-        <span><i class="bi bi-geo-alt me-1"></i>${Number(v.latitude).toFixed(4)}, ${Number(v.longitude).toFixed(4)}</span>
-        <span>${Utils.formatDate(v.last_updated)}</span>
+      <div class="d-flex justify-content-between align-items-center text-dim small">
+        <span><i class="bi bi-geo-alt me-1"></i>${v.latitude ? Number(v.latitude).toFixed(4) + ', ' + Number(v.longitude).toFixed(4) : 'No coordinates yet'}</span>
+        <button class="btn btn-xs btn-outline-success py-0 px-1" style="font-size: 0.7rem;" 
+                onclick="event.stopPropagation(); openMobileModalForTruck('${v.registration_number}')" 
+                title="Connect Driver Mobile Phone">
+          <i class="bi bi-phone"></i> Track
+        </button>
       </div>
     </div>
   `).join('');
@@ -223,5 +235,103 @@ function setupSimulator() {
         Utils.showToast(err.message || 'Simulation failed', 'danger');
       }
     });
+  }
+}
+
+/**
+ * Mobile Phone Tracking Modal:
+ * Generates direct driver tracking links and live QR codes for drivers to scan.
+ */
+function setupMobileTrackModal() {
+  const truckSelect = document.getElementById('modal-phone-truck-select');
+  const linkInput = document.getElementById('modal-phone-link-input');
+  const copyBtn = document.getElementById('btn-copy-driver-link');
+  const whatsappBtn = document.getElementById('btn-whatsapp-share');
+  const openTabBtn = document.getElementById('btn-open-driver-tab');
+
+  if (!truckSelect) return;
+
+  // Populate truck select from allLiveVehicles or API
+  ApiClient.get('/vehicles?limit=100').then(res => {
+    if (res.success && res.data) {
+      truckSelect.innerHTML = '<option value="">-- Choose Truck --</option>' + res.data.map(v => `
+        <option value="${v.registration_number}">
+          ${v.registration_number} (${v.make} ${v.model}) ${v.assigned_driver ? '- ' + v.assigned_driver.name : ''}
+        </option>
+      `).join('');
+
+      // Auto-select first vehicle
+      if (res.data.length > 0) {
+        truckSelect.value = res.data[0].registration_number;
+        updateMobileTrackLink();
+      }
+    }
+  }).catch(console.error);
+
+  truckSelect.addEventListener('change', updateMobileTrackLink);
+
+  if (copyBtn && linkInput) {
+    copyBtn.addEventListener('click', () => {
+      if (!linkInput.value) return;
+      navigator.clipboard.writeText(linkInput.value).then(() => {
+        Utils.showToast('Driver tracking link copied to clipboard!', 'success');
+      }).catch(() => {
+        linkInput.select();
+        document.execCommand('copy');
+        Utils.showToast('Link copied!', 'success');
+      });
+    });
+  }
+}
+
+function updateMobileTrackLink() {
+  const truckSelect = document.getElementById('modal-phone-truck-select');
+  const linkInput = document.getElementById('modal-phone-link-input');
+  const whatsappBtn = document.getElementById('btn-whatsapp-share');
+  const openTabBtn = document.getElementById('btn-open-driver-tab');
+  const canvas = document.getElementById('modal-phone-qrcode-canvas');
+
+  if (!truckSelect || !linkInput) return;
+
+  const reg = truckSelect.value.trim();
+  const origin = window.location.origin;
+  const driverUrl = reg
+    ? `${origin}/driver-tracker.html?v=${encodeURIComponent(reg)}`
+    : `${origin}/driver-tracker.html`;
+
+  linkInput.value = driverUrl;
+
+  if (openTabBtn) openTabBtn.href = driverUrl;
+
+  if (whatsappBtn) {
+    const msg = `Hello Driver, please click this link on your smartphone to start live GPS tracking for truck ${reg || 'your vehicle'}:\n${driverUrl}`;
+    whatsappBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+  }
+
+  // Generate QR Code on canvas
+  if (canvas && typeof QRCode !== 'undefined') {
+    QRCode.toCanvas(canvas, driverUrl, {
+      width: 170,
+      margin: 1,
+      color: {
+        dark: '#0f172a',
+        light: '#ffffff'
+      }
+    }, function (error) {
+      if (error) console.error('QR code render error:', error);
+    });
+  }
+}
+
+function openMobileModalForTruck(regNumber) {
+  const truckSelect = document.getElementById('modal-phone-truck-select');
+  if (truckSelect) {
+    truckSelect.value = regNumber;
+    updateMobileTrackLink();
+  }
+  const modalEl = document.getElementById('mobileTrackModal');
+  if (modalEl) {
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
   }
 }

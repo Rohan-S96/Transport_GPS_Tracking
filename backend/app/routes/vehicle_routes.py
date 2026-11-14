@@ -48,6 +48,28 @@ def list_vehicles():
     return paginated_response(results, page, limit, total)
 
 
+@vehicle_bp.route("/public-roster", methods=["GET"])
+def get_public_roster():
+    """
+    Public lightweight endpoint for driver mobile tracking.
+    Returns active vehicles list without requiring auth token.
+    """
+    vehicles = Vehicle.query.filter(Vehicle.status != "decommissioned").order_by(Vehicle.registration_number.asc()).all()
+    data = [
+        {
+            "id": v.id,
+            "registration_number": v.registration_number,
+            "make": v.make,
+            "model": v.model,
+            "status": v.status,
+            "has_gps_device": bool(v.gps_device),
+            "driver_name": v.assigned_driver.full_name if v.assigned_driver else None,
+        }
+        for v in vehicles
+    ]
+    return success_response(data)
+
+
 @vehicle_bp.route("/<string:vehicle_id>", methods=["GET"])
 @jwt_required()
 @handle_service_errors

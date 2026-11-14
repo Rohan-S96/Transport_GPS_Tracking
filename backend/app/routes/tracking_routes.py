@@ -41,8 +41,8 @@ def ingest_gps_location():
     # Validate required fields
     if "latitude" not in data or "longitude" not in data:
         return error_response("latitude and longitude are required", 422)
-    if not data.get("vehicle_id") and not data.get("device_imei"):
-        return error_response("Provide vehicle_id or device_imei to identify the truck", 422)
+    if not data.get("vehicle_id") and not data.get("device_imei") and not data.get("registration_number"):
+        return error_response("Provide vehicle_id, device_imei, or registration_number to identify the truck", 422)
 
     try:
         float(data["latitude"])
