@@ -535,7 +535,6 @@ label.text-muted,
 }
 
 .driver-card-name {
-  color: var(--text-main);
   transition: color 0.2s ease;
 }
 

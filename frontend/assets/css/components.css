@@ -361,7 +361,10 @@ textarea.form-control:focus {
 
 /* ── 2. LIGHT THEME: Bold Black Captions, Names & Values ──────────────────── */
 [data-bs-theme="light"] .driver-card-name,
-[data-theme="light"] .driver-card-name {
+[data-theme="light"] .driver-card-name,
+html[data-bs-theme="light"] .driver-card-name,
+body[data-bs-theme="light"] .driver-card-name,
+.driver-card-name {
   color: #000000 !important;
   font-weight: 800 !important;
   font-size: 1.25rem !important;
