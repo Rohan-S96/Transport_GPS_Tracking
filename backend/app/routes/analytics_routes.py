@@ -35,9 +35,9 @@ def get_fleet_summary():
     maintenance_vehicles = v_query.filter_by(status="maintenance").count()
     offline_vehicles = total_vehicles - (active_vehicles + idle_vehicles + maintenance_vehicles)
 
-    unacknowledged_alerts = a_query.filter_by(is_acknowledged=False).count()
+    unacknowledged_alerts = a_query.filter(Alert.is_acknowledged == False).count()
     total_trips = t_query.count()
-    total_odometer = sum([v.current_odometer_km for v in v_query.all()])
+    total_odometer = sum([(v.current_odometer_km or 0.0) for v in v_query.all()])
 
     return success_response({
         "fleet": {

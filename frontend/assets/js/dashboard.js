@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load dashboard data
   await loadDashboardMetrics();
+
+  window.addEventListener('tgt_theme_changed', () => {
+    loadDashboardMetrics();
+  });
 });
 
 function setupMobileSidebar() {
@@ -92,18 +96,35 @@ function renderFleetStatusChart(fleet = {}) {
   const idle = fleet.idle || 0;
   const maintenance = fleet.maintenance || 0;
   const offline = fleet.offline || 0;
+  const total = active + idle + maintenance + offline;
 
   if (fleetChartInstance) fleetChartInstance.destroy();
+
+  const isLight = document.documentElement.getAttribute('data-bs-theme') === 'light' || 
+                  document.documentElement.getAttribute('data-theme') === 'light' ||
+                  localStorage.getItem('tgt_theme') === 'light';
+  const borderColor = isLight ? '#FFFFFF' : '#111827';
+  const legendColor = isLight ? '#000000' : '#9CA3AF';
+
+  const chartData = total > 0 
+    ? [active, idle, maintenance, offline]
+    : [1];
+  const chartLabels = total > 0
+    ? ['Active', 'Idle', 'Maintenance', 'Offline']
+    : ['No Fleet Data'];
+  const chartColors = total > 0
+    ? ['#10B981', '#F59E0B', '#8B5CF6', '#64748B']
+    : [isLight ? '#E2E8F0' : '#334155'];
 
   fleetChartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['Active', 'Idle', 'Maintenance', 'Offline'],
+      labels: chartLabels,
       datasets: [{
-        data: [active, idle, maintenance, offline],
-        backgroundColor: ['#10B981', '#F59E0B', '#8B5CF6', '#64748B'],
+        data: chartData,
+        backgroundColor: chartColors,
         borderWidth: 2,
-        borderColor: '#111827',
+        borderColor: borderColor,
       }]
     },
     options: {
@@ -112,7 +133,7 @@ function renderFleetStatusChart(fleet = {}) {
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { color: '#9CA3AF', font: { family: 'Outfit', size: 12 }, padding: 16 }
+          labels: { color: legendColor, font: { family: 'Outfit', size: 12 }, padding: 16 }
         }
       },
       cutout: '72%',
@@ -128,6 +149,12 @@ function renderSpeedActivityChart(liveVehicles = []) {
   const speeds = liveVehicles.map(v => Number(v.speed_kmh || 0));
 
   if (activityChartInstance) activityChartInstance.destroy();
+
+  const isLight = document.documentElement.getAttribute('data-bs-theme') === 'light' || 
+                  document.documentElement.getAttribute('data-theme') === 'light' ||
+                  localStorage.getItem('tgt_theme') === 'light';
+  const tickColor = isLight ? '#000000' : '#9CA3AF';
+  const gridColor = isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.05)';
 
   activityChartInstance = new Chart(ctx, {
     type: 'bar',
@@ -145,8 +172,8 @@ function renderSpeedActivityChart(liveVehicles = []) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: { grid: { display: false }, ticks: { color: '#9CA3AF', font: { family: 'Outfit', size: 11 } } },
-        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9CA3AF' }, beginAtZero: true }
+        x: { grid: { display: false }, ticks: { color: tickColor, font: { family: 'Outfit', size: 11 } } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor }, beginAtZero: true }
       },
       plugins: {
         legend: { display: false }
