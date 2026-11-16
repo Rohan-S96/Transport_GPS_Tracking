@@ -138,8 +138,8 @@ class TrackingService:
         vehicles = query.all()
         fleet_data = []
         now = datetime.now(timezone.utc)
-        # Device is considered actively online if telemetry was ingested within the last 10 seconds
-        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_TIMEOUT_SECONDS", 10)
+        # Device is considered actively online if telemetry was ingested within the last 15 seconds (10s-15s check window)
+        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_HEARTBEAT_TIMEOUT_SECONDS", 15)
 
         for v in vehicles:
             latest = (
@@ -220,7 +220,7 @@ class TrackingService:
         )
 
         now = datetime.now(timezone.utc)
-        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_TIMEOUT_SECONDS", 10)
+        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_HEARTBEAT_TIMEOUT_SECONDS", 15)
         is_online = False
         computed_status = vehicle.status
 

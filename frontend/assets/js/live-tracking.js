@@ -34,7 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupMobileTrackModal();
 
   // Start continuous polling (every 4s)
-  pollTimer = setInterval(fetchLivePositions, CONFIG.POLL_INTERVAL_MS);
+  pollTimer = setInterval(fetchLivePositions, CONFIG.POLL_INTERVAL_MS || 4000);
+
+  // Active client-side heartbeat monitor (checks every 3s to enforce 10s-15s online/offline timeout)
+  setInterval(evaluateFleetHeartbeat, CONFIG.HEARTBEAT_CHECK_INTERVAL_MS || 3000);
 });
 
 function setupMobileSidebar() {
@@ -70,21 +73,7 @@ async function fetchLivePositions() {
   try {
     const res = await ApiClient.get('/gps/live');
     if (res.success && Array.isArray(res.data)) {
-      const now = Date.now();
-      const timeoutMs = (CONFIG.ONLINE_TIMEOUT_SECONDS || 10) * 1000;
-
-      // Enforce 10-second online/offline check
-      allLiveVehicles = res.data.map(v => {
-        if (v.last_updated) {
-          const diffMs = Math.abs(now - new Date(v.last_updated).getTime());
-          if (diffMs > timeoutMs) {
-            v.is_online = false;
-            if (v.status !== 'maintenance') v.status = 'offline';
-          }
-        }
-        return v;
-      });
-
+      allLiveVehicles = res.data;
       filterAndRenderVehicles();
 
       // If a vehicle was requested to be focused on initial load
@@ -146,6 +135,54 @@ function filterAndRenderVehicles() {
   });
 }
 
+/**
+ * Periodically verifies signal heartbeat age (10s-15s window).
+ * If a vehicle stops sending packets for >15s, dynamically transitions it to Offline.
+ */
+function evaluateFleetHeartbeat() {
+  if (!allLiveVehicles || allLiveVehicles.length === 0) return;
+
+  const now = Date.now();
+  const TIMEOUT_MS = CONFIG.ONLINE_HEARTBEAT_TIMEOUT_MS || 15000;
+  let statusChanged = false;
+
+  allLiveVehicles.forEach(v => {
+    if (!v.last_updated) {
+      if (v.is_online) {
+        v.is_online = false;
+        v.status = 'offline';
+        statusChanged = true;
+      }
+      return;
+    }
+
+    try {
+      const lastTime = new Date(v.last_updated).getTime();
+      const ageMs = now - lastTime;
+      const wasOnline = v.is_online;
+
+      if (ageMs > TIMEOUT_MS) {
+        // Exceeded 15s without telemetry packet -> Mark Offline
+        if (v.status !== 'maintenance' && v.status !== 'decommissioned') {
+          v.is_online = false;
+          v.status = 'offline';
+          if (wasOnline) statusChanged = true;
+        }
+      } else {
+        // Packet arrived within 15s window -> Mark Online
+        if (v.status === 'offline') {
+          v.is_online = true;
+          v.status = (v.speed_kmh && v.speed_kmh > 3.0) ? 'active' : 'idle';
+          if (!wasOnline) statusChanged = true;
+        }
+      }
+    } catch (e) {}
+  });
+
+  // Re-render UI list & map markers if status changed or to refresh relative time labels
+  updateLiveFleetList(allLiveVehicles);
+}
+
 function updateLiveFleetList(vehicles) {
   const listEl = document.getElementById('live-vehicles-list');
   const countEl = document.getElementById('live-vehicles-count');
@@ -159,7 +196,21 @@ function updateLiveFleetList(vehicles) {
     return;
   }
 
-  listEl.innerHTML = vehicles.map(v => `
+  const now = Date.now();
+  const TIMEOUT_MS = CONFIG.ONLINE_HEARTBEAT_TIMEOUT_MS || 15000;
+
+  listEl.innerHTML = vehicles.map(v => {
+    let ageSec = null;
+    if (v.last_updated) {
+      try {
+        ageSec = Math.max(0, Math.round((now - new Date(v.last_updated).getTime()) / 1000));
+      } catch (e) {}
+    }
+
+    const isLiveConnected = (v.is_online === true) && (ageSec !== null && ageSec <= 15);
+    const timeText = ageSec !== null ? (ageSec < 4 ? 'Live now' : `${ageSec}s ago`) : 'No signal';
+
+    return `
     <div class="p-3 border-bottom border-secondary border-opacity-10 vehicle-card-item cursor-pointer" 
          onclick="focusVehicle('${v.vehicle_id}', ${v.latitude}, ${v.longitude})"
          style="cursor: pointer; transition: background 0.2s;"
@@ -173,7 +224,7 @@ function updateLiveFleetList(vehicles) {
           <span class="badge ${v.tracking_source === 'hardware_gps' ? 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25' : 'bg-success bg-opacity-10 text-success border border-success border-opacity-25'}" style="font-size: 0.65rem; padding: 0.25rem 0.5rem;">
             ${v.tracking_source === 'hardware_gps' ? '<i class="bi bi-cpu"></i> GPS Kit' : '<i class="bi bi-phone"></i> Phone'}
           </span>
-          ${Utils.getStatusBadge(v.status, v.is_online)}
+          ${Utils.getStatusBadge(isLiveConnected ? (v.status === 'idle' ? 'idle' : 'active') : 'offline', isLiveConnected)}
         </div>
       </div>
       <div class="d-flex justify-content-between text-muted small mb-1">
@@ -181,7 +232,9 @@ function updateLiveFleetList(vehicles) {
         <span><i class="bi bi-person me-1"></i>${v.driver_name || 'Unassigned'}</span>
       </div>
       <div class="d-flex justify-content-between align-items-center text-dim small">
-        <span><i class="bi bi-geo-alt me-1"></i>${v.latitude ? Number(v.latitude).toFixed(4) + ', ' + Number(v.longitude).toFixed(4) : 'No coordinates yet'}</span>
+        <span class="${isLiveConnected ? 'text-success' : 'text-muted'}" title="Heartbeat signal recency">
+          <i class="bi ${isLiveConnected ? 'bi-broadcast text-success' : 'bi-clock-history'} me-1"></i>${timeText}
+        </span>
         <button class="btn btn-xs btn-outline-success py-0 px-1" style="font-size: 0.7rem;" 
                 onclick="event.stopPropagation(); openMobileModalForTruck('${v.registration_number}')" 
                 title="Connect Driver Mobile Phone">
@@ -189,7 +242,7 @@ function updateLiveFleetList(vehicles) {
         </button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 function focusVehicle(id, lat, lng) {
