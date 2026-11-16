@@ -68,7 +68,68 @@ class Vehicle(db.Model):
         lazy="dynamic", cascade="all, delete-orphan"
     )
 
+    def compute_online_status(self, now=None, timeout_seconds=60):
+        if not now:
+            now = datetime.now(timezone.utc)
+
+        latest = (
+            self.telemetry
+            .order_by(db.text("recorded_at DESC"))
+            .first()
+        )
+        candidates = []
+        if latest:
+            if latest.recorded_at:
+                r_t = latest.recorded_at
+                candidates.append(r_t if r_t.tzinfo else r_t.replace(tzinfo=timezone.utc))
+            if latest.created_at:
+                c_t = latest.created_at
+                candidates.append(c_t if c_t.tzinfo else c_t.replace(tzinfo=timezone.utc))
+        if self.updated_at:
+            u_t = self.updated_at
+            candidates.append(u_t if u_t.tzinfo else u_t.replace(tzinfo=timezone.utc))
+        if self.gps_device and self.gps_device.last_seen_at:
+            d_t = self.gps_device.last_seen_at
+            candidates.append(d_t if d_t.tzinfo else d_t.replace(tzinfo=timezone.utc))
+
+        last_dt = max(candidates) if candidates else None
+
+        is_online = False
+        computed_status = self.status
+        if self.status == "offline":
+            is_online = False
+            computed_status = "offline"
+        elif self.status in ("maintenance", "decommissioned"):
+            is_online = False
+            computed_status = self.status
+        else:
+            if last_dt:
+                diff_sec = abs((now - last_dt).total_seconds())
+                if diff_sec <= timeout_seconds:
+                    is_online = True
+                    computed_status = "active" if (latest and latest.speed_kmh and latest.speed_kmh > 3.0) else "idle"
+                else:
+                    is_online = False
+                    computed_status = "offline"
+            else:
+                is_online = False
+                computed_status = "offline"
+
+        hardware_is_online = False
+        if self.gps_device and self.gps_device.last_seen_at:
+            hw_dt = self.gps_device.last_seen_at
+            if hw_dt.tzinfo is None:
+                hw_dt = hw_dt.replace(tzinfo=timezone.utc)
+            if abs((now - hw_dt).total_seconds()) <= timeout_seconds:
+                hardware_is_online = True
+
+        return is_online, computed_status, last_dt, hardware_is_online
+
     def to_dict(self, include_telemetry: bool = False, include_device: bool = False):
+        is_online, computed_status, last_dt, hw_online = self.compute_online_status()
+        if self.status != computed_status:
+            self.status = computed_status
+
         data = {
             "id": self.id,
             "organization_id": self.organization_id,
@@ -80,11 +141,14 @@ class Vehicle(db.Model):
             "color": self.color,
             "fuel_type": self.fuel_type,
             "fuel_capacity_litres": self.fuel_capacity_litres,
-            "status": self.status,
+            "status": computed_status,
+            "is_online": is_online,
             "current_odometer_km": round(self.current_odometer_km, 1),
             "speed_limit_kmh": self.speed_limit_kmh,
             "notes": self.notes,
             "assigned_driver": self.assigned_driver.to_dict() if self.assigned_driver else None,
+            "device_imei": self.gps_device.imei if self.gps_device else None,
+            "last_updated": last_dt.isoformat() if last_dt else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
@@ -96,5 +160,10 @@ class Vehicle(db.Model):
             )
             data["last_known_telemetry"] = last_point.to_dict() if last_point else None
         if include_device:
-            data["gps_device"] = self.gps_device.to_dict() if self.gps_device else None
+            if self.gps_device:
+                dev_dict = self.gps_device.to_dict()
+                dev_dict["is_online"] = hw_online
+                data["gps_device"] = dev_dict
+            else:
+                data["gps_device"] = None
         return data

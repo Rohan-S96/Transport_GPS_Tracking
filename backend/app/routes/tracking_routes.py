@@ -71,14 +71,6 @@ def connect_gps():
     json_body = request.get_json(silent=True)
     if json_body and isinstance(json_body, dict):
         data.update(json_body)
-    elif request.data:
-        try:
-            import json
-            raw_parsed = json.loads(request.data.decode("utf-8"))
-            if isinstance(raw_parsed, dict):
-                data.update(raw_parsed)
-        except Exception:
-            pass
 
     if not data.get("vehicle_id") and not data.get("registration_number") and not data.get("device_imei"):
         return error_response("Provide vehicle_id, registration_number, or device_imei", 422)
@@ -104,14 +96,6 @@ def disconnect_gps():
     json_body = request.get_json(silent=True)
     if json_body and isinstance(json_body, dict):
         data.update(json_body)
-    elif request.data:
-        try:
-            import json
-            raw_parsed = json.loads(request.data.decode("utf-8"))
-            if isinstance(raw_parsed, dict):
-                data.update(raw_parsed)
-        except Exception:
-            pass
 
     if not data.get("vehicle_id") and not data.get("registration_number") and not data.get("device_imei"):
         return error_response("Provide vehicle_id, registration_number, or device_imei", 422)

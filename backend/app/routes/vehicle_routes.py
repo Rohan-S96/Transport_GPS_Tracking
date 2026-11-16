@@ -31,7 +31,12 @@ def list_vehicles():
     if role != "admin" and org_id:
         query = query.filter_by(organization_id=org_id)
     if status:
-        query = query.filter_by(status=status)
+        if status.lower() == "online":
+            query = query.filter(Vehicle.status.in_(["active", "idle", "online"]))
+        elif status.lower() == "offline":
+            query = query.filter(Vehicle.status == "offline")
+        else:
+            query = query.filter_by(status=status)
     if search:
         like = f"%{search}%"
         query = query.filter(
@@ -45,6 +50,18 @@ def list_vehicles():
     total = query.count()
     vehicles = query.offset((page - 1) * limit).limit(limit).all()
     results = [v.to_dict(include_telemetry=include_telemetry, include_device=True) for v in vehicles]
+    
+    # Filter by exact computed online/offline state if specified
+    if status and status.lower() == "online":
+        results = [r for r in results if r.get("is_online") is True]
+    elif status and status.lower() == "offline":
+        results = [r for r in results if r.get("is_online") is False]
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
     return paginated_response(results, page, limit, total)
 
 

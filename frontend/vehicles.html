@@ -134,14 +134,18 @@
             </div>
             <div class="col-md-4 col-lg-3">
               <select id="vehicle-status-filter" class="form-select form-select-sm">
-                <option value="">All Operational Statuses</option>
+                <option value="">All Statuses (Online & Offline)</option>
+                <option value="online">Online (Active & Connected)</option>
+                <option value="offline">Offline (Disconnected)</option>
                 <option value="active">Active (On Duty)</option>
                 <option value="idle">Idle (Parked)</option>
                 <option value="maintenance">Maintenance</option>
-                <option value="offline">Offline</option>
               </select>
             </div>
-            <div class="col-md-2 ms-auto text-end">
+            <div class="col-md-5 col-lg-5 ms-auto text-end d-flex align-items-center justify-content-end gap-2">
+              <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 small" id="live-sync-indicator" title="Automatic status check every 10 seconds">
+                <i class="bi bi-broadcast me-1"></i>Auto-Check 10s
+              </span>
               <button class="btn btn-sm btn-outline-secondary" onclick="loadVehicles()">
                 <i class="bi bi-arrow-clockwise me-1"></i>Refresh
               </button>
@@ -158,15 +162,16 @@
                   <th>Plate / Reg #</th>
                   <th>Make &amp; Model</th>
                   <th>Assigned Driver</th>
-                  <th>Status</th>
-                  <th>Odometer</th>
+                  <th>Vehicle Status</th>
+                  <th>Hardware / GPS Tracker</th>
                   <th>Current Speed</th>
-                  <th>Device IMEI</th>
+                  <th>Odometer</th>
+                  <th>Last Ping</th>
                   <th style="width: 140px;">Actions</th>
                 </tr>
               </thead>
               <tbody id="vehicles-table-body">
-                <tr><td colspan="8" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading vehicles...</td></tr>
+                <tr><td colspan="9" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Loading vehicles...</td></tr>
               </tbody>
             </table>
           </div>

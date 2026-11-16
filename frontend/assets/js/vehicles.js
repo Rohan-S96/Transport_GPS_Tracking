@@ -2,6 +2,7 @@
  * Vehicle Fleet Roster, Registration, and Specs Management.
  */
 let allDriversList = [];
+let vehiclePollTimer = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!Auth.requireAuth()) return;
@@ -10,6 +11,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await loadDriversForSelect();
   await loadVehicles();
+
+  // Auto-check vehicle and hardware online/offline status every 10 seconds
+  if (!vehiclePollTimer) {
+    vehiclePollTimer = setInterval(() => {
+      const openModal = document.querySelector('.modal.show');
+      if (!openModal) {
+        loadVehicles(true);
+      }
+    }, 10000);
+  }
 
   const addForm = document.getElementById('add-vehicle-form');
   if (addForm) {
@@ -73,14 +84,16 @@ function populateDriverDropdowns() {
   if (editSelect) editSelect.innerHTML = options;
 }
 
-async function loadVehicles() {
+async function loadVehicles(silent = false) {
   const tableBody = document.getElementById('vehicles-table-body');
   if (!tableBody) return;
 
   const search = document.getElementById('vehicle-search')?.value.trim() || '';
   const status = document.getElementById('vehicle-status-filter')?.value || '';
 
-  Utils.renderLoading(tableBody, 'Loading fleet inventory...');
+  if (!silent) {
+    Utils.renderLoading(tableBody, 'Loading fleet inventory & hardware status...');
+  }
 
   try {
     let endpoint = '/vehicles?limit=50&include_telemetry=true';
@@ -90,14 +103,51 @@ async function loadVehicles() {
     const res = await ApiClient.get(endpoint);
     if (res.success && Array.isArray(res.data)) {
       if (res.data.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5"><i class="bi bi-truck display-6 d-block mb-2 opacity-50"></i>No vehicles matching query</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-5"><i class="bi bi-truck display-6 d-block mb-2 opacity-50"></i>No vehicles matching query</td></tr>';
         return;
       }
 
       tableBody.innerHTML = res.data.map(v => {
+        const isOnline = Boolean(v.is_online);
         const driverName = v.assigned_driver ? v.assigned_driver.name : '<span class="text-muted">Unassigned</span>';
-        const imeiText = v.device_imei ? `<code>${v.device_imei}</code>` : '<span class="badge bg-secondary opacity-50">No Device</span>';
-        const lastSpeed = v.last_known_telemetry ? Utils.formatSpeed(v.last_known_telemetry.speed_kmh) : '0 km/h';
+        const lastSpeed = v.last_known_telemetry ? Utils.formatSpeed(v.last_known_telemetry.speed_kmh) : '0.0 km/h';
+        const pingTime = v.last_updated ? Utils.formatDate(v.last_updated) : (v.last_known_telemetry?.recorded_at ? Utils.formatDate(v.last_known_telemetry.recorded_at) : 'No signal');
+
+        // Hardware GPS device status check
+        let hardwareHtml = '';
+        if (v.gps_device && v.gps_device.imei) {
+          const hwOnline = Boolean(v.gps_device.is_online);
+          hardwareHtml = `
+            <div class="d-flex flex-column gap-1">
+              <span class="d-inline-flex align-items-center gap-1 font-monospace small">
+                <i class="bi bi-cpu text-muted"></i><code>${v.gps_device.imei}</code>
+              </span>
+              <span>
+                ${hwOnline 
+                  ? '<span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 0.65rem;"><i class="bi bi-broadcast me-1"></i>Hardware Online</span>'
+                  : '<span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25" style="font-size: 0.65rem;"><i class="bi bi-slash-circle me-1"></i>Hardware Offline</span>'
+                }
+              </span>
+            </div>
+          `;
+        } else if (isOnline) {
+          hardwareHtml = `
+            <div class="d-flex flex-column gap-1">
+              <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" style="font-size: 0.7rem; width: fit-content;">
+                <i class="bi bi-phone me-1"></i>Driver Phone GPS
+              </span>
+              <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 0.65rem; width: fit-content;">
+                <i class="bi bi-broadcast me-1"></i>Mobile Online
+              </span>
+            </div>
+          `;
+        } else {
+          hardwareHtml = `
+            <span class="badge bg-secondary bg-opacity-25 text-dim border border-secondary border-opacity-25" style="font-size: 0.7rem;">
+              <i class="bi bi-dash-circle me-1"></i>No Hardware Tracker
+            </span>
+          `;
+        }
 
         return `
           <tr>
@@ -106,10 +156,15 @@ async function loadVehicles() {
             </td>
             <td>${v.make} ${v.model} ${v.year ? `(${v.year})` : ''}</td>
             <td>${driverName}</td>
-            <td>${Utils.getStatusBadge(v.status)}</td>
-            <td>${Utils.formatDistance(v.current_odometer_km)}</td>
+            <td>${Utils.getStatusBadge(v.status, isOnline)}</td>
+            <td>${hardwareHtml}</td>
             <td>${lastSpeed}</td>
-            <td>${imeiText}</td>
+            <td>${Utils.formatDistance(v.current_odometer_km)}</td>
+            <td>
+              <span class="${isOnline ? 'text-success' : 'text-muted'}" style="font-size: 0.8rem;" title="Last telemetry ping">
+                <i class="bi ${isOnline ? 'bi-broadcast text-success' : 'bi-clock-history'} me-1"></i>${pingTime}
+              </span>
+            </td>
             <td>
               <div class="btn-group btn-group-sm">
                 <a href="/live-tracking.html?focus=${v.id}" class="btn btn-outline-info" title="Live Track">
@@ -131,7 +186,9 @@ async function loadVehicles() {
     }
   } catch (err) {
     console.error('Error loading vehicles:', err);
-    Utils.renderError(tableBody, 'Failed to fetch vehicles from API', () => loadVehicles());
+    if (!silent) {
+      Utils.renderError(tableBody, 'Failed to fetch vehicles from API', () => loadVehicles());
+    }
   }
 }
 

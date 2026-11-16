@@ -157,19 +157,14 @@ class TrackingService:
             is_online = False
             computed_status = v.status
 
-            candidates = []
+            last_dt = None
             if latest:
-                if latest.recorded_at:
-                    r_t = latest.recorded_at
-                    candidates.append(r_t if r_t.tzinfo else r_t.replace(tzinfo=timezone.utc))
-                if latest.created_at:
-                    c_t = latest.created_at
-                    candidates.append(c_t if c_t.tzinfo else c_t.replace(tzinfo=timezone.utc))
-            if v.updated_at:
-                u_t = v.updated_at
-                candidates.append(u_t if u_t.tzinfo else u_t.replace(tzinfo=timezone.utc))
+                last_dt = latest.created_at or latest.recorded_at
+            if not last_dt and v.updated_at:
+                last_dt = v.updated_at
 
-            last_dt = max(candidates) if candidates else None
+            if last_dt and last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=timezone.utc)
 
             if v.status == "offline":
                 is_online = False
@@ -181,7 +176,7 @@ class TrackingService:
                 is_online = False
                 computed_status = "decommissioned"
             else:
-                # Active or Idle: Check if device sent data or connected recently
+                # Active or Idle: Check if device sent data recently
                 if last_dt:
                     diff_sec = abs((now - last_dt).total_seconds())
                     if diff_sec <= ONLINE_TIMEOUT_SECONDS:
@@ -197,8 +192,18 @@ class TrackingService:
             if v.status != computed_status:
                 v.status = computed_status
 
-            # Format last_updated with explicit UTC timezone indicator
-            last_updated_iso = last_dt.isoformat() if last_dt else None
+            # Make sure last_updated is formatted with UTC timezone info
+            last_updated_iso = None
+            if latest and latest.recorded_at:
+                r_dt = latest.recorded_at
+                if r_dt.tzinfo is None:
+                    r_dt = r_dt.replace(tzinfo=timezone.utc)
+                last_updated_iso = r_dt.isoformat()
+            elif v.updated_at:
+                u_dt = v.updated_at
+                if u_dt.tzinfo is None:
+                    u_dt = u_dt.replace(tzinfo=timezone.utc)
+                last_updated_iso = u_dt.isoformat()
 
             fleet_data.append({
                 "vehicle_id": v.id,
@@ -247,19 +252,14 @@ class TrackingService:
         is_online = False
         computed_status = vehicle.status
 
-        candidates = []
+        last_dt = None
         if latest:
-            if latest.recorded_at:
-                r_t = latest.recorded_at
-                candidates.append(r_t if r_t.tzinfo else r_t.replace(tzinfo=timezone.utc))
-            if latest.created_at:
-                c_t = latest.created_at
-                candidates.append(c_t if c_t.tzinfo else c_t.replace(tzinfo=timezone.utc))
-        if vehicle.updated_at:
-            u_t = vehicle.updated_at
-            candidates.append(u_t if u_t.tzinfo else u_t.replace(tzinfo=timezone.utc))
+            last_dt = latest.created_at or latest.recorded_at
+        if not last_dt and vehicle.updated_at:
+            last_dt = vehicle.updated_at
 
-        last_dt = max(candidates) if candidates else None
+        if last_dt and last_dt.tzinfo is None:
+            last_dt = last_dt.replace(tzinfo=timezone.utc)
 
         if vehicle.status == "offline":
             is_online = False
@@ -287,7 +287,17 @@ class TrackingService:
             vehicle.status = computed_status
             db.session.commit()
 
-        last_updated_iso = last_dt.isoformat() if last_dt else None
+        last_updated_iso = None
+        if latest and latest.recorded_at:
+            r_dt = latest.recorded_at
+            if r_dt.tzinfo is None:
+                r_dt = r_dt.replace(tzinfo=timezone.utc)
+            last_updated_iso = r_dt.isoformat()
+        elif vehicle.updated_at:
+            u_dt = vehicle.updated_at
+            if u_dt.tzinfo is None:
+                u_dt = u_dt.replace(tzinfo=timezone.utc)
+            last_updated_iso = u_dt.isoformat()
 
         return {
             "vehicle_id": vehicle.id,
