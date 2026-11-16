@@ -16,18 +16,18 @@ A production-grade, full-stack Transport GPS Tracking and Fleet Management platf
 
 ---
 
-## 📚 Complete Project Documentation (`docs/`)
+## 📚 Complete Project Documentation (`doc/`)
 
-Exhaustive technical documentation is available in the [`docs/`](./docs) directory:
+Exhaustive technical documentation is available in the [`doc/`](./doc) directory:
 
-- [**Documentation Index**](./docs/README.md) — Master guide and quick navigation.
-- [**Project Overview**](./docs/PROJECT_OVERVIEW.md) — System capabilities, technology stack, and user matrix.
-- [**System Architecture**](./docs/ARCHITECTURE.md) — Architectural diagrams, pipeline flows, and services.
-- [**REST API Documentation**](./docs/API_DOCUMENTATION.md) — Complete endpoint reference with request/response samples.
-- [**Database Schema Specification**](./docs/DATABASE_SCHEMA.md) — Full ER diagram, table definitions, and indexes.
-- [**Driver Mobile GPS Tracker**](./docs/MOBILE_TRACKER.md) — Smartphone tracking, WakeLock, and battery APIs.
-- [**Production Deployment Guide**](./docs/DEPLOYMENT_GUIDE.md) — Render, Vercel, and Supabase deployment guide.
-- [**Developer & Operations Guide**](./docs/DEVELOPER_GUIDE.md) — Local development, pytest suite, and troubleshooting.
+- [**Documentation Index**](./doc/README.md) — Master guide and quick navigation.
+- [**Project Overview**](./doc/PROJECT_OVERVIEW.md) — System capabilities, technology stack, and user matrix.
+- [**System Architecture**](./doc/ARCHITECTURE.md) — Architectural diagrams, pipeline flows, and services.
+- [**REST API Documentation**](./doc/API_DOCUMENTATION.md) — Complete endpoint reference with request/response samples.
+- [**Database Schema Specification**](./doc/DATABASE_SCHEMA.md) — Full ER diagram, table definitions, and indexes.
+- [**Driver Mobile GPS Tracker**](./doc/MOBILE_TRACKER.md) — Smartphone tracking, WakeLock, and battery APIs.
+- [**Production Deployment Guide**](./doc/DEPLOYMENT_GUIDE.md) — Render, Vercel, and Supabase deployment guide.
+- [**Developer & Operations Guide**](./doc/DEVELOPER_GUIDE.md) — Local development, pytest suite, and troubleshooting.
 
 ---
 
