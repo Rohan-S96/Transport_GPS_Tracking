@@ -133,6 +133,7 @@ async function loadDrivers() {
       }).join('');
 
       Auth.initUI();
+      syncDriverCardTheme();
     }
   } catch (err) {
     console.error('Error loading drivers:', err);
@@ -251,6 +252,7 @@ function debounce(func, wait) {
 
 /**
  * Synchronize driver card colors whenever the theme is changed.
+ * Guarantees that driver name, phone number, and metadata are solid black in light theme.
  */
 function syncDriverCardTheme() {
   const isLight = document.documentElement.getAttribute('data-bs-theme') === 'light' || 
@@ -260,7 +262,7 @@ function syncDriverCardTheme() {
   const captionColor = isLight ? '#000000' : '#CBD5E1';
   const valColor = isLight ? '#000000' : '#FFFFFF';
 
-  document.querySelectorAll('.driver-card-name').forEach(el => {
+  document.querySelectorAll('.driver-card-name, .driver-roster-card h5, .kpi-card h5').forEach(el => {
     el.style.setProperty('color', nameColor, 'important');
   });
   document.querySelectorAll('.driver-card-label').forEach(el => {
@@ -271,8 +273,23 @@ function syncDriverCardTheme() {
       el.style.setProperty('color', valColor, 'important');
     }
   });
+  document.querySelectorAll('.driver-card-lic code').forEach(el => {
+    el.style.setProperty('color', isLight ? '#000000' : '#F8FAFC', 'important');
+    el.style.setProperty('background', isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.1)', 'important');
+  });
 }
 
 window.addEventListener('tgt_theme_changed', () => {
   syncDriverCardTheme();
 });
+
+window.addEventListener('storage', (e) => {
+  if (e.key === 'tgt_theme') syncDriverCardTheme();
+});
+
+try {
+  const themeObserver = new MutationObserver(() => {
+    syncDriverCardTheme();
+  });
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme', 'data-theme'] });
+} catch (e) {}

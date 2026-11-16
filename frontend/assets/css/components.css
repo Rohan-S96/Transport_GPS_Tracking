@@ -432,7 +432,7 @@ body[data-bs-theme="light"] .driver-card-name,
 
 [data-bs-theme="light"] .text-white:not(.btn):not(.badge):not(.toast):not(.alert),
 [data-theme="light"] .text-white:not(.btn):not(.badge):not(.toast):not(.alert) {
-  color: #0F172A !important;
+  color: #000000 !important;
 }
 
 [data-bs-theme="light"] .kpi-card:hover,
