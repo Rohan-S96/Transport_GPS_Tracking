@@ -501,4 +501,10 @@ label.text-muted,
   transform: rotate(45deg) scale(0.9);
 }
 
+.driver-card-name {
+  color: var(--text-main);
+  transition: color 0.2s ease;
+}
+
+
 

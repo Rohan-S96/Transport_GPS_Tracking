@@ -315,6 +315,24 @@ textarea.form-control:focus {
   background: #FFFFFF;
   border-color: rgba(15, 23, 42, 0.08);
   box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05);
+  color: #0F172A;
+}
+
+[data-bs-theme="light"] .kpi-card h5,
+[data-theme="light"] .kpi-card h5,
+[data-bs-theme="light"] .driver-card-name,
+[data-theme="light"] .driver-card-name {
+  color: #0F172A !important;
+}
+
+[data-bs-theme="dark"] .driver-card-name,
+[data-theme="dark"] .driver-card-name {
+  color: #FFFFFF !important;
+}
+
+[data-bs-theme="light"] .text-white:not(.btn):not(.badge):not(.toast):not(.alert),
+[data-theme="light"] .text-white:not(.btn):not(.badge):not(.toast):not(.alert) {
+  color: #0F172A !important;
 }
 
 [data-bs-theme="light"] .kpi-card:hover,

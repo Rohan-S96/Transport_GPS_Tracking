@@ -70,6 +70,9 @@ async function loadDrivers() {
         const score = d.safety_score !== undefined ? d.safety_score : 100;
         const scoreColor = score >= 85 ? 'text-success' : score >= 70 ? 'text-warning' : 'text-danger';
         const assignedTruck = d.assigned_vehicle_reg ? `<span class="badge bg-primary bg-opacity-25 text-info"><i class="bi bi-truck me-1"></i>${d.assigned_vehicle_reg}</span>` : '<span class="text-muted">Unassigned</span>';
+        const driverName = (d.first_name || d.last_name) 
+          ? `${d.first_name || ''} ${d.last_name || ''}`.trim() 
+          : (d.name || 'Unnamed Driver');
 
         return `
           <div class="col-md-6 col-lg-4 mb-4">
@@ -80,8 +83,8 @@ async function loadDrivers() {
                     <i class="bi bi-person-badge-fill"></i>
                   </div>
                   <div>
-                    <h5 class="mb-0 text-white fw-bold">${d.first_name} ${d.last_name}</h5>
-                    <small class="text-muted">Lic: <code>${d.license_number}</code></small>
+                    <h5 class="mb-0 fw-bold driver-card-name" style="color: var(--text-main); font-size: 1.1rem;">${driverName}</h5>
+                    <small class="text-muted">Lic: <code>${d.license_number || 'N/A'}</code></small>
                   </div>
                 </div>
                 <div>
@@ -91,7 +94,7 @@ async function loadDrivers() {
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
                 <span class="text-muted">Phone Number</span>
-                <span class="text-white">${d.phone_number || 'N/A'}</span>
+                <span class="fw-semibold" style="color: var(--text-main);">${d.phone_number || 'N/A'}</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
@@ -106,7 +109,7 @@ async function loadDrivers() {
 
               <div class="d-flex justify-content-between align-items-center mb-3 small">
                 <span class="text-muted">License Expiry</span>
-                <span>${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
+                <span style="color: var(--text-main);">${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
               </div>
 
               <div class="d-flex gap-2 pt-2 border-top border-secondary border-opacity-10">
