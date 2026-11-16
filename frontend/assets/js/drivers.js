@@ -94,7 +94,7 @@ async function loadDrivers() {
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
                 <span class="text-muted">Phone Number</span>
-                <span class="fw-semibold" style="color: var(--text-main);">${d.phone_number || 'N/A'}</span>
+                <span class="fw-semibold driver-card-val" style="color: var(--text-main);">${d.phone_number || 'N/A'}</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
@@ -104,12 +104,12 @@ async function loadDrivers() {
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
                 <span class="text-muted">Assigned Truck</span>
-                <span>${assignedTruck}</span>
+                <span class="driver-card-val" style="color: var(--text-main);">${assignedTruck}</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-3 small">
                 <span class="text-muted">License Expiry</span>
-                <span style="color: var(--text-main);">${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
+                <span class="driver-card-val" style="color: var(--text-main);">${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
               </div>
 
               <div class="d-flex gap-2 pt-2 border-top border-secondary border-opacity-10">

@@ -325,9 +325,19 @@ textarea.form-control:focus {
   color: #0F172A !important;
 }
 
+[data-bs-theme="light"] .driver-card-val,
+[data-theme="light"] .driver-card-val {
+  color: #1E293B !important;
+}
+
 [data-bs-theme="dark"] .driver-card-name,
 [data-theme="dark"] .driver-card-name {
   color: #FFFFFF !important;
+}
+
+[data-bs-theme="dark"] .driver-card-val,
+[data-theme="dark"] .driver-card-val {
+  color: #E2E8F0 !important;
 }
 
 [data-bs-theme="light"] .text-white:not(.btn):not(.badge):not(.toast):not(.alert),
