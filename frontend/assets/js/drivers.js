@@ -66,13 +66,6 @@ async function loadDrivers() {
         return;
       }
 
-      const isLight = document.documentElement.getAttribute('data-bs-theme') === 'light' || 
-                      document.documentElement.getAttribute('data-theme') === 'light' || 
-                      localStorage.getItem('tgt_theme') === 'light';
-      const nameColor = isLight ? '#000000' : '#FFFFFF';
-      const captionColor = isLight ? '#000000' : '#CBD5E1';
-      const valColor = isLight ? '#000000' : '#FFFFFF';
-
       container.innerHTML = res.data.map(d => {
         const score = d.safety_score !== undefined ? d.safety_score : 100;
         const scoreColor = score >= 85 ? 'text-success' : score >= 70 ? 'text-warning' : 'text-danger';
@@ -90,7 +83,7 @@ async function loadDrivers() {
                     <i class="bi bi-person-badge-fill"></i>
                   </div>
                   <div>
-                    <h5 class="mb-0 fw-bold driver-card-name" style="color: ${nameColor} !important;">${driverName}</h5>
+                    <h5 class="mb-0 fw-bold driver-card-name">${driverName}</h5>
                     <small class="driver-card-lic">Lic: <code>${d.license_number || 'N/A'}</code></small>
                   </div>
                 </div>
@@ -100,23 +93,23 @@ async function loadDrivers() {
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
-                <span class="driver-card-label" style="color: ${captionColor} !important;">Phone Number</span>
-                <span class="fw-bold driver-card-val" style="color: ${valColor} !important;">${d.phone_number || 'N/A'}</span>
+                <span class="driver-card-label">Phone Number</span>
+                <span class="fw-bold driver-card-val">${d.phone_number || 'N/A'}</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
-                <span class="driver-card-label" style="color: ${captionColor} !important;">Safety Score</span>
+                <span class="driver-card-label">Safety Score</span>
                 <span class="fw-bold ${scoreColor}"><i class="bi bi-shield-check me-1"></i>${score}%</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
-                <span class="driver-card-label" style="color: ${captionColor} !important;">Assigned Truck</span>
-                <span class="driver-card-val" style="color: ${valColor} !important;">${assignedTruck}</span>
+                <span class="driver-card-label">Assigned Truck</span>
+                <span class="driver-card-val">${assignedTruck}</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-3 small">
-                <span class="driver-card-label" style="color: ${captionColor} !important;">License Expiry</span>
-                <span class="driver-card-val" style="color: ${valColor} !important;">${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
+                <span class="driver-card-label">License Expiry</span>
+                <span class="driver-card-val">${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
               </div>
 
               <div class="d-flex gap-2 pt-2 border-top border-secondary border-opacity-10">
@@ -255,9 +248,12 @@ function debounce(func, wait) {
  * Guarantees that driver name, phone number, and metadata are solid black in light theme.
  */
 function syncDriverCardTheme() {
-  const isLight = document.documentElement.getAttribute('data-bs-theme') === 'light' || 
-                  document.documentElement.getAttribute('data-theme') === 'light' || 
-                  localStorage.getItem('tgt_theme') === 'light';
+  const bsTheme = document.documentElement.getAttribute('data-bs-theme');
+  const customTheme = document.documentElement.getAttribute('data-theme');
+  const storedTheme = localStorage.getItem('tgt_theme');
+  const isDark = (bsTheme === 'dark' || customTheme === 'dark' || storedTheme === 'dark') && 
+                 (bsTheme !== 'light' && customTheme !== 'light' && storedTheme !== 'light');
+  const isLight = !isDark;
   const nameColor = isLight ? '#000000' : '#FFFFFF';
   const captionColor = isLight ? '#000000' : '#CBD5E1';
   const valColor = isLight ? '#000000' : '#FFFFFF';
