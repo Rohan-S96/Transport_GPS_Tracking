@@ -58,23 +58,16 @@ class FleetMap {
     const vId = vehicle.vehicle_id || vehicle.id;
     const latLng = [vehicle.latitude, vehicle.longitude];
 
-    let ageSec = null;
-    if (vehicle.last_updated) {
-      try {
-        ageSec = Math.max(0, Math.round((Date.now() - new Date(vehicle.last_updated).getTime()) / 1000));
-      } catch (e) {}
-    }
-
-    const isOnline = (vehicle.is_online === true) && (ageSec === null || ageSec <= 15);
+    const isOnline = Boolean(vehicle.is_online);
     const markerStatus = isOnline ? (vehicle.status === 'idle' ? 'idle' : 'active') : 'offline';
     const icon = this.createVehicleIcon(markerStatus, vehicle.heading || 0);
-    const timeText = ageSec !== null ? (ageSec < 4 ? 'Live now' : `${ageSec}s ago`) : 'No signal';
+    const timeText = vehicle.last_updated ? Utils.formatDate(vehicle.last_updated) : 'No signal';
 
     const popupHtml = `
       <div class="vehicle-popup-card">
         <div class="vehicle-popup-header">
           <div class="vehicle-popup-reg">${vehicle.registration_number || 'Vehicle'}</div>
-          ${Utils.getStatusBadge(markerStatus, isOnline)}
+          ${Utils.getStatusBadge(vehicle.status, isOnline)}
         </div>
         <div class="vehicle-popup-stat">
           <span>Driver</span>
@@ -94,11 +87,11 @@ class FleetMap {
         </div>
         <div class="vehicle-popup-stat">
           <span>Connection</span>
-          <span>${isOnline ? `<span class="text-success fw-bold"><i class="bi bi-broadcast me-1"></i>Online (${timeText})</span>` : '<span class="text-secondary"><i class="bi bi-slash-circle me-1"></i>Offline (No ping >15s)</span>'}</span>
+          <span>${isOnline ? '<span class="text-success fw-bold"><i class="bi bi-broadcast me-1"></i>Online (Live)</span>' : '<span class="text-secondary"><i class="bi bi-slash-circle me-1"></i>Offline (Disconnected)</span>'}</span>
         </div>
         <div class="vehicle-popup-stat">
           <span>Last Seen</span>
-          <span>${Utils.formatDate(vehicle.last_updated || (vehicle.last_known_telemetry ? vehicle.last_known_telemetry.recorded_at : ''))}</span>
+          <span>${timeText}</span>
         </div>
       </div>
     `;

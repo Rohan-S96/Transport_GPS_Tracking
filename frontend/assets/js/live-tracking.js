@@ -35,9 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Start continuous polling (every 4s)
   pollTimer = setInterval(fetchLivePositions, CONFIG.POLL_INTERVAL_MS || 4000);
-
-  // Active client-side heartbeat monitor (checks every 3s to enforce 10s-15s online/offline timeout)
-  setInterval(evaluateFleetHeartbeat, CONFIG.HEARTBEAT_CHECK_INTERVAL_MS || 3000);
 });
 
 function setupMobileSidebar() {
@@ -135,54 +132,6 @@ function filterAndRenderVehicles() {
   });
 }
 
-/**
- * Periodically verifies signal heartbeat age (10s-15s window).
- * If a vehicle stops sending packets for >15s, dynamically transitions it to Offline.
- */
-function evaluateFleetHeartbeat() {
-  if (!allLiveVehicles || allLiveVehicles.length === 0) return;
-
-  const now = Date.now();
-  const TIMEOUT_MS = CONFIG.ONLINE_HEARTBEAT_TIMEOUT_MS || 15000;
-  let statusChanged = false;
-
-  allLiveVehicles.forEach(v => {
-    if (!v.last_updated) {
-      if (v.is_online) {
-        v.is_online = false;
-        v.status = 'offline';
-        statusChanged = true;
-      }
-      return;
-    }
-
-    try {
-      const lastTime = new Date(v.last_updated).getTime();
-      const ageMs = now - lastTime;
-      const wasOnline = v.is_online;
-
-      if (ageMs > TIMEOUT_MS) {
-        // Exceeded 15s without telemetry packet -> Mark Offline
-        if (v.status !== 'maintenance' && v.status !== 'decommissioned') {
-          v.is_online = false;
-          v.status = 'offline';
-          if (wasOnline) statusChanged = true;
-        }
-      } else {
-        // Packet arrived within 15s window -> Mark Online
-        if (v.status === 'offline') {
-          v.is_online = true;
-          v.status = (v.speed_kmh && v.speed_kmh > 3.0) ? 'active' : 'idle';
-          if (!wasOnline) statusChanged = true;
-        }
-      }
-    } catch (e) {}
-  });
-
-  // Re-render UI list & map markers if status changed or to refresh relative time labels
-  updateLiveFleetList(allLiveVehicles);
-}
-
 function updateLiveFleetList(vehicles) {
   const listEl = document.getElementById('live-vehicles-list');
   const countEl = document.getElementById('live-vehicles-count');
@@ -196,19 +145,9 @@ function updateLiveFleetList(vehicles) {
     return;
   }
 
-  const now = Date.now();
-  const TIMEOUT_MS = CONFIG.ONLINE_HEARTBEAT_TIMEOUT_MS || 15000;
-
   listEl.innerHTML = vehicles.map(v => {
-    let ageSec = null;
-    if (v.last_updated) {
-      try {
-        ageSec = Math.max(0, Math.round((now - new Date(v.last_updated).getTime()) / 1000));
-      } catch (e) {}
-    }
-
-    const isLiveConnected = (v.is_online === true) && (ageSec !== null && ageSec <= 15);
-    const timeText = ageSec !== null ? (ageSec < 4 ? 'Live now' : `${ageSec}s ago`) : 'No signal';
+    const isOnline = Boolean(v.is_online);
+    const timeText = v.last_updated ? Utils.formatDate(v.last_updated) : 'No signal';
 
     return `
     <div class="p-3 border-bottom border-secondary border-opacity-10 vehicle-card-item cursor-pointer" 
@@ -224,7 +163,7 @@ function updateLiveFleetList(vehicles) {
           <span class="badge ${v.tracking_source === 'hardware_gps' ? 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25' : 'bg-success bg-opacity-10 text-success border border-success border-opacity-25'}" style="font-size: 0.65rem; padding: 0.25rem 0.5rem;">
             ${v.tracking_source === 'hardware_gps' ? '<i class="bi bi-cpu"></i> GPS Kit' : '<i class="bi bi-phone"></i> Phone'}
           </span>
-          ${Utils.getStatusBadge(isLiveConnected ? (v.status === 'idle' ? 'idle' : 'active') : 'offline', isLiveConnected)}
+          ${Utils.getStatusBadge(v.status, isOnline)}
         </div>
       </div>
       <div class="d-flex justify-content-between text-muted small mb-1">
@@ -232,8 +171,8 @@ function updateLiveFleetList(vehicles) {
         <span><i class="bi bi-person me-1"></i>${v.driver_name || 'Unassigned'}</span>
       </div>
       <div class="d-flex justify-content-between align-items-center text-dim small">
-        <span class="${isLiveConnected ? 'text-success' : 'text-muted'}" title="Heartbeat signal recency">
-          <i class="bi ${isLiveConnected ? 'bi-broadcast text-success' : 'bi-clock-history'} me-1"></i>${timeText}
+        <span class="${isOnline ? 'text-success' : 'text-muted'}" title="Signal timestamp">
+          <i class="bi ${isOnline ? 'bi-broadcast text-success' : 'bi-clock-history'} me-1"></i>${timeText}
         </span>
         <button class="btn btn-xs btn-outline-success py-0 px-1" style="font-size: 0.7rem;" 
                 onclick="event.stopPropagation(); openMobileModalForTruck('${v.registration_number}')" 

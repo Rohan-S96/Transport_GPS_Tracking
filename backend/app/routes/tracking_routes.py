@@ -56,13 +56,30 @@ def ingest_gps_location():
 
 # ── POST /api/v1/gps/connect ──────────────────────────────────────────────────
 
-@tracking_bp.route("/api/v1/gps/connect", methods=["POST"])
+@tracking_bp.route("/api/v1/gps/connect", methods=["POST", "GET"])
 @handle_service_errors
 def connect_gps():
     """
     Explicitly mark a vehicle as online when driver starts tracking.
+    Supports JSON, form data, or query params.
     """
-    data = request.get_json(silent=True) or (request.form.to_dict() if request.form else {})
+    data = {}
+    if request.args:
+        data.update(request.args.to_dict())
+    if request.form:
+        data.update(request.form.to_dict())
+    json_body = request.get_json(silent=True)
+    if json_body and isinstance(json_body, dict):
+        data.update(json_body)
+    elif request.data:
+        try:
+            import json
+            raw_parsed = json.loads(request.data.decode("utf-8"))
+            if isinstance(raw_parsed, dict):
+                data.update(raw_parsed)
+        except Exception:
+            pass
+
     if not data.get("vehicle_id") and not data.get("registration_number") and not data.get("device_imei"):
         return error_response("Provide vehicle_id, registration_number, or device_imei", 422)
 
@@ -72,14 +89,30 @@ def connect_gps():
 
 # ── POST /api/v1/gps/disconnect ───────────────────────────────────────────────
 
-@tracking_bp.route("/api/v1/gps/disconnect", methods=["POST"])
+@tracking_bp.route("/api/v1/gps/disconnect", methods=["POST", "GET"])
 @handle_service_errors
 def disconnect_gps():
     """
     Explicitly mark a vehicle as offline when driver stops tracking or disconnects.
-    Supports JSON or form data (for navigator.sendBeacon).
+    Supports JSON, form data (sendBeacon), or query params.
     """
-    data = request.get_json(silent=True) or (request.form.to_dict() if request.form else {})
+    data = {}
+    if request.args:
+        data.update(request.args.to_dict())
+    if request.form:
+        data.update(request.form.to_dict())
+    json_body = request.get_json(silent=True)
+    if json_body and isinstance(json_body, dict):
+        data.update(json_body)
+    elif request.data:
+        try:
+            import json
+            raw_parsed = json.loads(request.data.decode("utf-8"))
+            if isinstance(raw_parsed, dict):
+                data.update(raw_parsed)
+        except Exception:
+            pass
+
     if not data.get("vehicle_id") and not data.get("registration_number") and not data.get("device_imei"):
         return error_response("Provide vehicle_id, registration_number, or device_imei", 422)
 

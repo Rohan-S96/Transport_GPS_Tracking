@@ -118,6 +118,7 @@ class TrackingService:
         vehicle = TrackingService._resolve_vehicle(data)
         if vehicle.status != "maintenance" and vehicle.status != "decommissioned":
             vehicle.status = "active" if is_online else "offline"
+            vehicle.updated_at = datetime.now(timezone.utc)
             db.session.commit()
         return {
             "vehicle_id": vehicle.id,
@@ -138,8 +139,8 @@ class TrackingService:
         vehicles = query.all()
         fleet_data = []
         now = datetime.now(timezone.utc)
-        # Device is considered actively online if telemetry was ingested within the last 15 seconds (10s-15s check window)
-        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_HEARTBEAT_TIMEOUT_SECONDS", 15)
+        # Timeout window: consider device online if telemetry or connect signal received within 60 seconds
+        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_HEARTBEAT_TIMEOUT_SECONDS", 60)
 
         for v in vehicles:
             latest = (
@@ -156,26 +157,48 @@ class TrackingService:
             is_online = False
             computed_status = v.status
 
+            candidates = []
             if latest:
-                last_time = latest.created_at or latest.recorded_at
-                if last_time.tzinfo is None:
-                    last_time = last_time.replace(tzinfo=timezone.utc)
-                diff_sec = abs((now - last_time).total_seconds())
+                if latest.recorded_at:
+                    r_t = latest.recorded_at
+                    candidates.append(r_t if r_t.tzinfo else r_t.replace(tzinfo=timezone.utc))
+                if latest.created_at:
+                    c_t = latest.created_at
+                    candidates.append(c_t if c_t.tzinfo else c_t.replace(tzinfo=timezone.utc))
+            if v.updated_at:
+                u_t = v.updated_at
+                candidates.append(u_t if u_t.tzinfo else u_t.replace(tzinfo=timezone.utc))
 
-                if diff_sec <= ONLINE_TIMEOUT_SECONDS and v.status != "offline":
-                    is_online = True
-                    computed_status = "active" if (latest.speed_kmh and latest.speed_kmh > 3.0) else "idle"
+            last_dt = max(candidates) if candidates else None
+
+            if v.status == "offline":
+                is_online = False
+                computed_status = "offline"
+            elif v.status == "maintenance":
+                is_online = False
+                computed_status = "maintenance"
+            elif v.status == "decommissioned":
+                is_online = False
+                computed_status = "decommissioned"
+            else:
+                # Active or Idle: Check if device sent data or connected recently
+                if last_dt:
+                    diff_sec = abs((now - last_dt).total_seconds())
+                    if diff_sec <= ONLINE_TIMEOUT_SECONDS:
+                        is_online = True
+                        computed_status = "active" if (latest and latest.speed_kmh and latest.speed_kmh > 3.0) else "idle"
+                    else:
+                        is_online = False
+                        computed_status = "offline"
                 else:
                     is_online = False
-                    if v.status != "maintenance" and v.status != "decommissioned":
-                        computed_status = "offline"
-            else:
-                is_online = False
-                if v.status != "maintenance" and v.status != "decommissioned":
                     computed_status = "offline"
 
             if v.status != computed_status:
                 v.status = computed_status
+
+            # Format last_updated with explicit UTC timezone indicator
+            last_updated_iso = last_dt.isoformat() if last_dt else None
 
             fleet_data.append({
                 "vehicle_id": v.id,
@@ -193,7 +216,7 @@ class TrackingService:
                 "battery_pct": latest.battery_pct if latest else None,
                 "fuel_level_pct": latest.fuel_level_pct if latest else None,
                 "odometer_km": round(v.current_odometer_km, 1),
-                "last_updated": latest.recorded_at.isoformat() if latest else None,
+                "last_updated": last_updated_iso,
                 "tracking_source": "hardware_gps" if is_hardware else "mobile_phone",
                 "has_hardware_device": bool(v.gps_device),
                 "device_imei": v.gps_device.imei if v.gps_device else None,
@@ -220,31 +243,51 @@ class TrackingService:
         )
 
         now = datetime.now(timezone.utc)
-        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_HEARTBEAT_TIMEOUT_SECONDS", 15)
+        ONLINE_TIMEOUT_SECONDS = current_app.config.get("ONLINE_HEARTBEAT_TIMEOUT_SECONDS", 60)
         is_online = False
         computed_status = vehicle.status
 
+        candidates = []
         if latest:
-            last_time = latest.created_at or latest.recorded_at
-            if last_time.tzinfo is None:
-                last_time = last_time.replace(tzinfo=timezone.utc)
-            diff_sec = abs((now - last_time).total_seconds())
+            if latest.recorded_at:
+                r_t = latest.recorded_at
+                candidates.append(r_t if r_t.tzinfo else r_t.replace(tzinfo=timezone.utc))
+            if latest.created_at:
+                c_t = latest.created_at
+                candidates.append(c_t if c_t.tzinfo else c_t.replace(tzinfo=timezone.utc))
+        if vehicle.updated_at:
+            u_t = vehicle.updated_at
+            candidates.append(u_t if u_t.tzinfo else u_t.replace(tzinfo=timezone.utc))
 
-            if diff_sec <= ONLINE_TIMEOUT_SECONDS and vehicle.status != "offline":
-                is_online = True
-                computed_status = "active" if (latest.speed_kmh and latest.speed_kmh > 3.0) else "idle"
+        last_dt = max(candidates) if candidates else None
+
+        if vehicle.status == "offline":
+            is_online = False
+            computed_status = "offline"
+        elif vehicle.status == "maintenance":
+            is_online = False
+            computed_status = "maintenance"
+        elif vehicle.status == "decommissioned":
+            is_online = False
+            computed_status = "decommissioned"
+        else:
+            if last_dt:
+                diff_sec = abs((now - last_dt).total_seconds())
+                if diff_sec <= ONLINE_TIMEOUT_SECONDS:
+                    is_online = True
+                    computed_status = "active" if (latest and latest.speed_kmh and latest.speed_kmh > 3.0) else "idle"
+                else:
+                    is_online = False
+                    computed_status = "offline"
             else:
                 is_online = False
-                if vehicle.status != "maintenance" and vehicle.status != "decommissioned":
-                    computed_status = "offline"
-        else:
-            is_online = False
-            if vehicle.status != "maintenance" and vehicle.status != "decommissioned":
                 computed_status = "offline"
 
         if vehicle.status != computed_status:
             vehicle.status = computed_status
             db.session.commit()
+
+        last_updated_iso = last_dt.isoformat() if last_dt else None
 
         return {
             "vehicle_id": vehicle.id,
@@ -261,7 +304,7 @@ class TrackingService:
             "battery_pct": latest.battery_pct if latest else None,
             "fuel_level_pct": latest.fuel_level_pct if latest else None,
             "odometer_km": round(vehicle.current_odometer_km, 1),
-            "last_updated": latest.recorded_at.isoformat() if latest else None,
+            "last_updated": last_updated_iso,
             "tracking_source": "hardware_gps" if is_hardware else "mobile_phone",
             "has_hardware_device": bool(vehicle.gps_device),
             "device_imei": vehicle.gps_device.imei if vehicle.gps_device else None,
@@ -403,20 +446,30 @@ class TrackingService:
         registration_number = data.get("registration_number")
 
         vehicle = None
-        if vehicle_id:
-            vehicle = Vehicle.query.get(vehicle_id)
-        elif device_imei:
+        if vehicle_id and str(vehicle_id).strip() and str(vehicle_id).strip().lower() not in ("null", "none", "undefined"):
+            vehicle = Vehicle.query.get(str(vehicle_id).strip())
+
+        if not vehicle and device_imei and str(device_imei).strip() and str(device_imei).strip().lower() not in ("null", "none", "undefined"):
             device = GPSDevice.query.filter_by(imei=str(device_imei).strip()).first()
             if device:
                 vehicle = device.vehicle
-        elif registration_number:
+
+        if not vehicle and registration_number and str(registration_number).strip():
+            reg_clean = str(registration_number).strip()
             vehicle = Vehicle.query.filter(
-                db.func.lower(Vehicle.registration_number) == str(registration_number).strip().lower()
+                db.func.lower(Vehicle.registration_number) == reg_clean.lower()
             ).first()
+            if not vehicle:
+                # Fallback: clean hyphens and spaces (e.g. MH-46 vs MH46)
+                clean_compact = reg_clean.replace("-", "").replace(" ", "").lower()
+                for v in Vehicle.query.all():
+                    if v.registration_number.replace("-", "").replace(" ", "").lower() == clean_compact:
+                        vehicle = v
+                        break
 
         if not vehicle:
             raise ValueError(
-                "Vehicle not found. Provide a valid vehicle_id, device_imei, or registration_number."
+                f"Vehicle not found for provided identifier (id: {vehicle_id}, reg: {registration_number}, imei: {device_imei})"
             )
         return vehicle
 

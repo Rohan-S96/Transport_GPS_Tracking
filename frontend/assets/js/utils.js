@@ -5,8 +5,12 @@ const Utils = {
   formatDate(isoString) {
     if (!isoString) return 'N/A';
     try {
-      const d = new Date(isoString);
-      return d.toLocaleString(undefined, {
+      let str = String(isoString).trim();
+      if (!str.endsWith('Z') && !str.includes('+') && !str.slice(10).includes('-')) {
+        str += 'Z';
+      }
+      const d = new Date(str);
+      return isNaN(d.getTime()) ? isoString : d.toLocaleString(undefined, {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',

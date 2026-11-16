@@ -52,7 +52,9 @@ def test_public_vehicle_roster_endpoint(client):
 
 
 def test_gps_connect_and_disconnect_endpoints(client):
-    """Test explicit device connect and disconnect endpoints."""
+    """Test explicit device connect and disconnect endpoints and live radar state."""
+    from app.services.tracking_service import TrackingService
+
     # 1. Connect
     res = client.post("/api/v1/gps/connect", json={
         "registration_number": "TEST-REG-01"
@@ -62,6 +64,13 @@ def test_gps_connect_and_disconnect_endpoints(client):
     assert data["is_online"] is True
     assert data["status"] == "active"
 
+    # Verify live fleet query reflects online state
+    fleet = TrackingService.get_live_fleet_positions()
+    v_live = next((v for v in fleet if v["registration_number"] == "TEST-REG-01"), None)
+    assert v_live is not None
+    assert v_live["is_online"] is True
+    assert v_live["status"] in ("active", "idle")
+
     # 2. Disconnect
     res = client.post("/api/v1/gps/disconnect", json={
         "registration_number": "TEST-REG-01"
@@ -70,6 +79,13 @@ def test_gps_connect_and_disconnect_endpoints(client):
     data = res.get_json()["data"]
     assert data["is_online"] is False
     assert data["status"] == "offline"
+
+    # Verify live fleet query reflects offline state
+    fleet_after = TrackingService.get_live_fleet_positions()
+    v_offline = next((v for v in fleet_after if v["registration_number"] == "TEST-REG-01"), None)
+    assert v_offline is not None
+    assert v_offline["is_online"] is False
+    assert v_offline["status"] == "offline"
 
 
 
