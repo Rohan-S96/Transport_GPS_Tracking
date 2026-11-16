@@ -70,7 +70,21 @@ async function fetchLivePositions() {
   try {
     const res = await ApiClient.get('/gps/live');
     if (res.success && Array.isArray(res.data)) {
-      allLiveVehicles = res.data;
+      const now = Date.now();
+      const timeoutMs = (CONFIG.ONLINE_TIMEOUT_SECONDS || 10) * 1000;
+
+      // Enforce 10-second online/offline check
+      allLiveVehicles = res.data.map(v => {
+        if (v.last_updated) {
+          const diffMs = Math.abs(now - new Date(v.last_updated).getTime());
+          if (diffMs > timeoutMs) {
+            v.is_online = false;
+            if (v.status !== 'maintenance') v.status = 'offline';
+          }
+        }
+        return v;
+      });
+
       filterAndRenderVehicles();
 
       // If a vehicle was requested to be focused on initial load

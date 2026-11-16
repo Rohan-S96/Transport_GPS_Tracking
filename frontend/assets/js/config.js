@@ -14,7 +14,8 @@ const PUBLIC_CONFIG = {
   // Public production backend API on Render:
   PRODUCTION_API_URL: 'https://transport-gps-tracking.onrender.com/api/v1',
   LOCAL_API_URL: 'http://localhost:5000/api/v1',
-  POLL_INTERVAL_MS: 4000,
+  POLL_INTERVAL_MS: 5000, // Check and refresh radar every 5 seconds
+  ONLINE_TIMEOUT_SECONDS: 10, // Mark offline if no telemetry in 10 seconds
   MAP_DEFAULT_CENTER: [19.0760, 72.8777], // Mumbai / JNPT Freight Corridor
   MAP_DEFAULT_ZOOM: 11
 };
@@ -38,6 +39,7 @@ const CONFIG = {
   },
 
   POLL_INTERVAL_MS: PUBLIC_CONFIG.POLL_INTERVAL_MS,
+  ONLINE_TIMEOUT_SECONDS: PUBLIC_CONFIG.ONLINE_TIMEOUT_SECONDS,
   MAP_DEFAULT_CENTER: PUBLIC_CONFIG.MAP_DEFAULT_CENTER,
   MAP_DEFAULT_ZOOM: PUBLIC_CONFIG.MAP_DEFAULT_ZOOM,
 

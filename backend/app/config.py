@@ -70,7 +70,8 @@ class Config:
     SPEED_LIMIT_KMH = float(os.getenv("DEFAULT_SPEED_LIMIT_KMH", "80.0"))
     GEOFENCE_ALERT_COOLDOWN_MINUTES = int(os.getenv("GEOFENCE_ALERT_COOLDOWN_MINUTES", "5"))
 
-    # Vehicle offline detection timeout
+    # Vehicle online / offline detection timeout (10 seconds for real-time responsiveness)
+    ONLINE_TIMEOUT_SECONDS = int(os.getenv("ONLINE_TIMEOUT_SECONDS", "10"))
     GPS_OFFLINE_TIMEOUT_SECONDS = int(
         os.getenv("GPS_OFFLINE_TIMEOUT_SECONDS", str(int(os.getenv("OFFLINE_TRUCK_MINUTES", "10")) * 60))
     )

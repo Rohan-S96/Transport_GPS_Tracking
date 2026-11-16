@@ -11,8 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Mobile sidebar toggle handler
   setupMobileSidebar();
 
-  // Load dashboard data
+  // Load dashboard data immediately and poll every 5 seconds
   await loadDashboardMetrics();
+  setInterval(loadDashboardMetrics, CONFIG.POLL_INTERVAL_MS || 5000);
 });
 
 function setupMobileSidebar() {
