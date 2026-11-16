@@ -28,6 +28,7 @@ Exhaustive technical documentation is available in the [`doc/`](./doc) directory
 - [**Driver Mobile GPS Tracker**](./doc/MOBILE_TRACKER.md) — Smartphone tracking, WakeLock, and battery APIs.
 - [**Production Deployment Guide**](./doc/DEPLOYMENT_GUIDE.md) — Render, Vercel, and Supabase deployment guide.
 - [**Developer & Operations Guide**](./doc/DEVELOPER_GUIDE.md) — Local development, pytest suite, and troubleshooting.
+- [**Theme & Styling Specification**](./doc/THEME_AND_STYLING_GUIDE.md) — High-contrast color standards, driver card typography, and modal styling.
 
 ---
 

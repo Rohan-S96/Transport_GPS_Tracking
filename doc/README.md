@@ -15,6 +15,7 @@ Welcome to the comprehensive documentation suite for the **Transport GPS Trackin
 | [**5. Mobile GPS Tracker Guide**](./MOBILE_TRACKER.md) | Technical architecture of the driver smartphone GPS tracker (WakeLock, Battery API, online/offline lifecycle). |
 | [**6. Deployment Guide**](./DEPLOYMENT_GUIDE.md) | Step-by-step production deployment for Render (Backend), Vercel (Frontend), and Supabase (PostgreSQL). |
 | [**7. Developer & Operations Guide**](./DEVELOPER_GUIDE.md) | Local environment setup, test suite execution (`pytest`), seeding sample data, and troubleshooting. |
+| [**8. Theme & Styling Specification**](./THEME_AND_STYLING_GUIDE.md) | Contrast standards, theme scoping (light & dark), driver details styling, and modal specifications. |
 
 ---
 
