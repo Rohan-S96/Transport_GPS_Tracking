@@ -80,12 +80,11 @@ class TrackingService:
         db.session.add(telemetry)
 
         # ── Update vehicle status ────────────────────────────────────────────
+        # Since fresh telemetry is being received, the vehicle is actively connected and online
         if speed > current_app.config.get("STOP_MAX_SPEED_KMH", 3.0):
             vehicle.status = "active"
-        elif ignition:
-            vehicle.status = "idle"
         else:
-            vehicle.status = "offline"
+            vehicle.status = "idle"
 
         # ── Update GPS device last_seen ───────────────────────────────────────
         if vehicle.gps_device:
@@ -111,17 +110,36 @@ class TrackingService:
             "alerts_generated": alerts_generated,
         }
 
+    @staticmethod
+    def set_device_connection(data: dict, is_online: bool) -> dict:
+        """
+        Explicitly set a vehicle online/offline when mobile tracker starts or stops.
+        """
+        vehicle = TrackingService._resolve_vehicle(data)
+        if vehicle.status != "maintenance" and vehicle.status != "decommissioned":
+            vehicle.status = "active" if is_online else "offline"
+            db.session.commit()
+        return {
+            "vehicle_id": vehicle.id,
+            "registration_number": vehicle.registration_number,
+            "status": vehicle.status,
+            "is_online": is_online
+        }
+
     # ─── Live Fleet Snapshot ───────────────────────────────────────────────────
 
     @staticmethod
     def get_live_fleet_positions(organization_id: str | None = None) -> list:
-        """Return the most-recent GPS point for every vehicle in the fleet."""
+        """Return the most-recent GPS point for every vehicle in the fleet with real-time online/offline calculation."""
         query = Vehicle.query
         if organization_id:
             query = query.filter_by(organization_id=organization_id)
 
         vehicles = query.all()
         fleet_data = []
+        now = datetime.now(timezone.utc)
+        # Device is considered actively online if telemetry was ingested within the last 75 seconds
+        ONLINE_TIMEOUT_SECONDS = 75
 
         for v in vehicles:
             latest = (
@@ -133,11 +151,38 @@ class TrackingService:
                 v.gps_device and v.gps_device.last_seen_at and latest and latest.recorded_at and
                 abs((latest.recorded_at - v.gps_device.last_seen_at).total_seconds()) < 300
             )
+
+            # Determine real-time online/offline connection state
+            is_online = False
+            computed_status = v.status
+
+            if latest:
+                last_time = latest.created_at or latest.recorded_at
+                if last_time.tzinfo is None:
+                    last_time = last_time.replace(tzinfo=timezone.utc)
+                diff_sec = abs((now - last_time).total_seconds())
+
+                if diff_sec <= ONLINE_TIMEOUT_SECONDS and v.status != "offline":
+                    is_online = True
+                    computed_status = "active" if (latest.speed_kmh and latest.speed_kmh > 3.0) else "idle"
+                else:
+                    is_online = False
+                    if v.status != "maintenance" and v.status != "decommissioned":
+                        computed_status = "offline"
+            else:
+                is_online = False
+                if v.status != "maintenance" and v.status != "decommissioned":
+                    computed_status = "offline"
+
+            if v.status != computed_status:
+                v.status = computed_status
+
             fleet_data.append({
                 "vehicle_id": v.id,
                 "registration_number": v.registration_number,
                 "make_model": f"{v.make} {v.model}",
-                "status": v.status,
+                "status": computed_status,
+                "is_online": is_online,
                 "driver_name": v.assigned_driver.full_name if v.assigned_driver else "Unassigned",
                 "driver_id": v.assigned_driver_id,
                 "latitude": latest.latitude if latest else None,
@@ -154,11 +199,12 @@ class TrackingService:
                 "device_imei": v.gps_device.imei if v.gps_device else None,
             })
 
+        db.session.commit()
         return fleet_data
 
     @staticmethod
     def get_live_truck_position(truck_id: str) -> dict:
-        """Return the live snapshot for a single truck."""
+        """Return the live snapshot for a single truck with real-time online/offline evaluation."""
         vehicle = Vehicle.query.get(truck_id)
         if not vehicle:
             raise ValueError("Truck not found")
@@ -172,11 +218,40 @@ class TrackingService:
             vehicle.gps_device and vehicle.gps_device.last_seen_at and latest and latest.recorded_at and
             abs((latest.recorded_at - vehicle.gps_device.last_seen_at).total_seconds()) < 300
         )
+
+        now = datetime.now(timezone.utc)
+        ONLINE_TIMEOUT_SECONDS = 75
+        is_online = False
+        computed_status = vehicle.status
+
+        if latest:
+            last_time = latest.created_at or latest.recorded_at
+            if last_time.tzinfo is None:
+                last_time = last_time.replace(tzinfo=timezone.utc)
+            diff_sec = abs((now - last_time).total_seconds())
+
+            if diff_sec <= ONLINE_TIMEOUT_SECONDS and vehicle.status != "offline":
+                is_online = True
+                computed_status = "active" if (latest.speed_kmh and latest.speed_kmh > 3.0) else "idle"
+            else:
+                is_online = False
+                if vehicle.status != "maintenance" and vehicle.status != "decommissioned":
+                    computed_status = "offline"
+        else:
+            is_online = False
+            if vehicle.status != "maintenance" and vehicle.status != "decommissioned":
+                computed_status = "offline"
+
+        if vehicle.status != computed_status:
+            vehicle.status = computed_status
+            db.session.commit()
+
         return {
             "vehicle_id": vehicle.id,
             "registration_number": vehicle.registration_number,
             "make_model": f"{vehicle.make} {vehicle.model}",
-            "status": vehicle.status,
+            "status": computed_status,
+            "is_online": is_online,
             "driver_name": vehicle.assigned_driver.full_name if vehicle.assigned_driver else "Unassigned",
             "latitude": latest.latitude if latest else None,
             "longitude": latest.longitude if latest else None,

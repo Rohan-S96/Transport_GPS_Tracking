@@ -42,8 +42,29 @@ const Utils = {
     return `${Number(litres).toFixed(1)} L`;
   },
 
-  getStatusBadge(status) {
+  getStatusBadge(status, isOnline = null) {
     const s = (status || 'offline').toLowerCase();
+
+    // If explicit offline status or isOnline is false
+    if (isOnline === false || s === 'offline') {
+      return `<span class="status-badge status-offline">Offline</span>`;
+    }
+
+    // Active, online, or isOnline is true -> Online (Connected)
+    if (isOnline === true || s === 'active' || s === 'online') {
+      return `<span class="status-badge status-online">Online</span>`;
+    }
+
+    // Stationary with tracker connected
+    if (s === 'idle') {
+      return `<span class="status-badge status-idle">Online (Idle)</span>`;
+    }
+
+    // Fleet Maintenance
+    if (s === 'maintenance') {
+      return `<span class="status-badge status-maintenance">Maintenance</span>`;
+    }
+
     return `<span class="status-badge status-${s}">${s}</span>`;
   },
 

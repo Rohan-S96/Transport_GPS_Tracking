@@ -218,6 +218,21 @@ function setupEventListeners() {
   window.addEventListener('offline', () => {
     updateNetworkStatus(false);
   });
+
+  // Handle unload to immediately disconnect truck and flag offline on dispatch screen
+  const handleDisconnectBeacon = () => {
+    if (isTracking && selectedVehicle) {
+      const payload = JSON.stringify({
+        registration_number: selectedVehicle.registration_number,
+        vehicle_id: selectedVehicle.id,
+      });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(`${CONFIG.API_BASE_URL}/gps/disconnect`, new Blob([payload], { type: 'application/json' }));
+      }
+    }
+  };
+  window.addEventListener('beforeunload', handleDisconnectBeacon);
+  window.addEventListener('pagehide', handleDisconnectBeacon);
 }
 
 // ── 5. START / STOP GPS TRACKING ────────────────────────────────────────────
@@ -262,6 +277,19 @@ async function startTracking() {
   );
 
   isTracking = true;
+
+  // Immediately notify backend that this truck is active & online
+  try {
+    fetch(`${CONFIG.API_BASE_URL}/gps/connect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        registration_number: selectedVehicle.registration_number,
+        vehicle_id: selectedVehicle.id
+      })
+    }).catch(e => console.warn('Could not notify connect:', e));
+  } catch (e) {}
+
   Utils.showToast(`GPS Tracking started for ${selectedVehicle.registration_number}!`, 'success');
 }
 
@@ -274,6 +302,20 @@ function stopTracking() {
   releaseWakeLock();
   isTracking = false;
   updateTrackingUI(false);
+
+  // Immediately notify backend that truck is disconnected and offline
+  if (selectedVehicle) {
+    try {
+      fetch(`${CONFIG.API_BASE_URL}/gps/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registration_number: selectedVehicle.registration_number,
+          vehicle_id: selectedVehicle.id
+        })
+      }).catch(e => console.warn('Could not notify disconnect:', e));
+    } catch (e) {}
+  }
 
   Utils.showToast(`Tracking stopped. Total distance: ${totalDistanceKm.toFixed(2)} km. Sent: ${packetsSentCount} packets.`, 'info');
 }
@@ -355,7 +397,7 @@ function onLocationSuccess(position) {
       heading: Math.round(heading),
       altitude: altitude ? Math.round(altitude) : null,
       accuracy_m: Math.round(accuracy),
-      ignition: speedKmh > 2.0,
+      ignition: true,
       timestamp: new Date().toISOString(),
     });
   }

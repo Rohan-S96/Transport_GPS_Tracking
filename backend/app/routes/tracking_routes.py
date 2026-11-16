@@ -54,6 +54,39 @@ def ingest_gps_location():
     return success_response(result, message="GPS location recorded", code=201)
 
 
+# ── POST /api/v1/gps/connect ──────────────────────────────────────────────────
+
+@tracking_bp.route("/api/v1/gps/connect", methods=["POST"])
+@handle_service_errors
+def connect_gps():
+    """
+    Explicitly mark a vehicle as online when driver starts tracking.
+    """
+    data = request.get_json(silent=True) or (request.form.to_dict() if request.form else {})
+    if not data.get("vehicle_id") and not data.get("registration_number") and not data.get("device_imei"):
+        return error_response("Provide vehicle_id, registration_number, or device_imei", 422)
+
+    result = TrackingService.set_device_connection(data, is_online=True)
+    return success_response(result, message="Vehicle connected and online")
+
+
+# ── POST /api/v1/gps/disconnect ───────────────────────────────────────────────
+
+@tracking_bp.route("/api/v1/gps/disconnect", methods=["POST"])
+@handle_service_errors
+def disconnect_gps():
+    """
+    Explicitly mark a vehicle as offline when driver stops tracking or disconnects.
+    Supports JSON or form data (for navigator.sendBeacon).
+    """
+    data = request.get_json(silent=True) or (request.form.to_dict() if request.form else {})
+    if not data.get("vehicle_id") and not data.get("registration_number") and not data.get("device_imei"):
+        return error_response("Provide vehicle_id, registration_number, or device_imei", 422)
+
+    result = TrackingService.set_device_connection(data, is_online=False)
+    return success_response(result, message="Vehicle disconnected and offline")
+
+
 # ── GET /api/v1/gps/live ──────────────────────────────────────────────────────
 
 @tracking_bp.route("/api/v1/gps/live", methods=["GET"])

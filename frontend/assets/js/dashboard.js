@@ -210,7 +210,7 @@ function renderLiveFleetTable(vehicles) {
         </a>
       </td>
       <td>${v.driver_name || '<span class="text-muted">Unassigned</span>'}</td>
-      <td>${Utils.getStatusBadge(v.status)}</td>
+      <td>${Utils.getStatusBadge(v.status, v.is_online)}</td>
       <td><code>${Utils.formatSpeed(v.speed_kmh)}</code></td>
       <td><small class="text-muted">${Utils.formatDate(v.last_updated)}</small></td>
     </tr>

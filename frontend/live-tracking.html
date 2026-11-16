@@ -57,6 +57,12 @@
         height: 55vh;
       }
     }
+
+    /* Pulsing online indicator dot */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
   </style>
 </head>
 <body>
@@ -189,10 +195,11 @@
             <!-- Filter Status -->
             <select id="vehicle-status-filter" class="form-select form-select-sm">
               <option value="">All Statuses</option>
-              <option value="active">Active (Moving)</option>
-              <option value="idle">Idle (Stationary)</option>
+              <option value="online">Online (Connected)</option>
+              <option value="offline">Offline (Disconnected)</option>
+              <option value="active">Moving (Active)</option>
+              <option value="idle">Stationary (Idle)</option>
               <option value="maintenance">Maintenance</option>
-              <option value="offline">Offline</option>
             </select>
           </div>
 

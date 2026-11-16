@@ -37,11 +37,13 @@ class FleetMap {
   }
 
   createVehicleIcon(status = 'active', heading = 0) {
+    const s = (status || 'offline').toLowerCase();
+    const isOnline = s === 'active' || s === 'idle' || s === 'online';
     return L.divIcon({
       className: 'custom-vehicle-marker',
       html: `
-        <div class="marker-pulse"></div>
-        <div class="marker-pin ${status.toLowerCase()}" style="transform: rotate(${heading}deg);">
+        ${isOnline ? '<div class="marker-pulse"></div>' : ''}
+        <div class="marker-pin ${s}" style="transform: rotate(${heading}deg);">
           <i class="bi bi-truck-front-fill"></i>
         </div>
       `,
@@ -55,13 +57,15 @@ class FleetMap {
 
     const vId = vehicle.vehicle_id || vehicle.id;
     const latLng = [vehicle.latitude, vehicle.longitude];
-    const icon = this.createVehicleIcon(vehicle.status, vehicle.heading || 0);
+    const isOnline = vehicle.is_online === true || vehicle.status === 'active' || vehicle.status === 'idle' || vehicle.status === 'online';
+    const markerStatus = isOnline ? (vehicle.status === 'idle' ? 'idle' : 'active') : 'offline';
+    const icon = this.createVehicleIcon(markerStatus, vehicle.heading || 0);
 
     const popupHtml = `
       <div class="vehicle-popup-card">
         <div class="vehicle-popup-header">
           <div class="vehicle-popup-reg">${vehicle.registration_number || 'Vehicle'}</div>
-          ${Utils.getStatusBadge(vehicle.status)}
+          ${Utils.getStatusBadge(vehicle.status, vehicle.is_online)}
         </div>
         <div class="vehicle-popup-stat">
           <span>Driver</span>
@@ -73,11 +77,15 @@ class FleetMap {
         </div>
         <div class="vehicle-popup-stat">
           <span>Battery</span>
-          <span>${vehicle.battery_pct || 100}%</span>
+          <span>${vehicle.battery_pct !== null && vehicle.battery_pct !== undefined ? vehicle.battery_pct + '%' : '100%'}</span>
         </div>
         <div class="vehicle-popup-stat">
           <span>Tracking Source</span>
           <span>${vehicle.tracking_source === 'hardware_gps' ? '<i class="bi bi-cpu text-info me-1"></i>Hardware GPS' : '<i class="bi bi-phone text-success me-1"></i>Driver Mobile'}</span>
+        </div>
+        <div class="vehicle-popup-stat">
+          <span>Connection</span>
+          <span>${isOnline ? '<span class="text-success fw-bold"><i class="bi bi-broadcast me-1"></i>Online (Live)</span>' : '<span class="text-secondary"><i class="bi bi-slash-circle me-1"></i>Offline (Disconnected)</span>'}</span>
         </div>
         <div class="vehicle-popup-stat">
           <span>Last Seen</span>

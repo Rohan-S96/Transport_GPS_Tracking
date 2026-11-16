@@ -51,3 +51,25 @@ def test_public_vehicle_roster_endpoint(client):
     assert any(v["registration_number"] == "TEST-REG-01" for v in data)
 
 
+def test_gps_connect_and_disconnect_endpoints(client):
+    """Test explicit device connect and disconnect endpoints."""
+    # 1. Connect
+    res = client.post("/api/v1/gps/connect", json={
+        "registration_number": "TEST-REG-01"
+    })
+    assert res.status_code == 200
+    data = res.get_json()["data"]
+    assert data["is_online"] is True
+    assert data["status"] == "active"
+
+    # 2. Disconnect
+    res = client.post("/api/v1/gps/disconnect", json={
+        "registration_number": "TEST-REG-01"
+    })
+    assert res.status_code == 200
+    data = res.get_json()["data"]
+    assert data["is_online"] is False
+    assert data["status"] == "offline"
+
+
+

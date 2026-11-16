@@ -111,7 +111,14 @@ function filterAndRenderVehicles() {
       (v.registration_number && v.registration_number.toLowerCase().includes(searchTerm)) ||
       (v.driver_name && v.driver_name.toLowerCase().includes(searchTerm));
 
-    const matchesStatus = !statusTerm || (v.status === statusTerm);
+    let matchesStatus = true;
+    if (statusTerm === 'online') {
+      matchesStatus = v.is_online === true || v.status === 'active' || v.status === 'idle' || v.status === 'online';
+    } else if (statusTerm === 'offline') {
+      matchesStatus = v.is_online === false || v.status === 'offline';
+    } else if (statusTerm) {
+      matchesStatus = (v.status === statusTerm);
+    }
     return matchesSearch && matchesStatus;
   });
 
@@ -145,12 +152,14 @@ function updateLiveFleetList(vehicles) {
          onmouseover="this.style.background='rgba(255,255,255,0.03)'"
          onmouseout="this.style.background='transparent'">
       <div class="d-flex justify-content-between align-items-center mb-1">
-        <span class="fw-bold text-white"><i class="bi bi-truck me-1 text-primary"></i>${v.registration_number}</span>
+        <span class="fw-bold" style="color: var(--text-main); font-size: 0.95rem;">
+          <i class="bi bi-truck me-1 text-primary"></i>${v.registration_number}
+        </span>
         <div class="d-flex align-items-center gap-1">
-          <span class="badge ${v.tracking_source === 'hardware_gps' ? 'bg-primary' : 'bg-success'} bg-opacity-20 ${v.tracking_source === 'hardware_gps' ? 'text-info' : 'text-success'}" style="font-size: 0.65rem;">
+          <span class="badge ${v.tracking_source === 'hardware_gps' ? 'bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25' : 'bg-success bg-opacity-10 text-success border border-success border-opacity-25'}" style="font-size: 0.65rem; padding: 0.25rem 0.5rem;">
             ${v.tracking_source === 'hardware_gps' ? '<i class="bi bi-cpu"></i> GPS Kit' : '<i class="bi bi-phone"></i> Phone'}
           </span>
-          ${Utils.getStatusBadge(v.status)}
+          ${Utils.getStatusBadge(v.status, v.is_online)}
         </div>
       </div>
       <div class="d-flex justify-content-between text-muted small mb-1">
