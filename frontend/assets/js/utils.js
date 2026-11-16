@@ -132,3 +132,101 @@ const Utils = {
     }
   }
 };
+
+/**
+ * ThemeManager - Manages Dark and Light theme switching and persistence across pages.
+ */
+const ThemeManager = {
+  STORAGE_KEY: 'tgt_theme',
+
+  getTheme() {
+    try {
+      return localStorage.getItem(this.STORAGE_KEY) || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  },
+
+  setTheme(theme) {
+    const isLight = theme === 'light';
+    const targetTheme = isLight ? 'light' : 'dark';
+    
+    document.documentElement.setAttribute('data-bs-theme', targetTheme);
+    document.documentElement.setAttribute('data-theme', targetTheme);
+    
+    try {
+      localStorage.setItem(this.STORAGE_KEY, targetTheme);
+    } catch (e) {
+      console.warn('Could not persist theme in localStorage', e);
+    }
+
+    this.updateButtons(targetTheme);
+    window.dispatchEvent(new CustomEvent('tgt_theme_changed', { detail: { theme: targetTheme } }));
+  },
+
+  toggle() {
+    const current = this.getTheme();
+    const next = current === 'light' ? 'dark' : 'light';
+    this.setTheme(next);
+    return next;
+  },
+
+  updateButtons(theme) {
+    const isLight = theme === 'light';
+    const buttons = document.querySelectorAll('.theme-toggle-btn, #theme-toggle-btn');
+    buttons.forEach((btn) => {
+      btn.setAttribute('title', isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode');
+      btn.setAttribute('aria-label', isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode');
+      btn.innerHTML = isLight 
+        ? '<i class="bi bi-moon-stars-fill text-primary" style="font-size:1.1rem;"></i>' 
+        : '<i class="bi bi-sun-fill text-warning" style="font-size:1.1rem;"></i>';
+    });
+  },
+
+  bindButtons() {
+    // Auto-inject into .topbar-actions if no theme button is present on the page
+    const topbarActions = document.querySelector('.topbar-actions');
+    if (topbarActions && !document.querySelector('.theme-toggle-btn, #theme-toggle-btn')) {
+      const toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.id = 'theme-toggle-btn';
+      toggleBtn.className = 'theme-toggle-btn';
+      // Insert right before logout or at the start
+      const logoutBtn = topbarActions.querySelector('.btn-logout');
+      if (logoutBtn) {
+        topbarActions.insertBefore(toggleBtn, logoutBtn);
+      } else {
+        topbarActions.appendChild(toggleBtn);
+      }
+    }
+
+    const buttons = document.querySelectorAll('.theme-toggle-btn, #theme-toggle-btn');
+    buttons.forEach((btn) => {
+      if (btn.dataset.themeBound) return;
+      btn.dataset.themeBound = 'true';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.toggle();
+      });
+    });
+
+    this.updateButtons(this.getTheme());
+  },
+
+  init() {
+    const theme = this.getTheme();
+    document.documentElement.setAttribute('data-bs-theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.bindButtons());
+    } else {
+      this.bindButtons();
+    }
+  }
+};
+
+// Expose globally and on Utils
+window.ThemeManager = ThemeManager;
+Utils.ThemeManager = ThemeManager;
+ThemeManager.init();
