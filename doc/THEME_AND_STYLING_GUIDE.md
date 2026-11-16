@@ -24,11 +24,23 @@ Theme attributes are set at the root element:
 | `--bg-main` | `#090D16` | `#F1F5F9` | Main page background |
 | `--bg-surface` | `#0F172A` | `#FFFFFF` | Cards, tables, sidebars, modals |
 | `--bg-surface-elevated`| `#1E293B` | `#F8FAFC` | Dropdowns, hover states |
-| `--text-main` | `#FFFFFF` | `#000000` / `#0F172A` | Primary titles, vehicle & driver names |
-| `--text-secondary` | `#E2E8F0` | `#1E293B` | Subtitles, primary data values |
-| `--text-muted` | `#CBD5E1` | `#000000` / `#334155` | Captions, field labels, metadata |
+| `--text-main` | `#FFFFFF` | `#000000` | Primary titles, vehicle & driver names, bold text |
+| `--text-secondary` | `#E2E8F0` | `#1E293B` | Subtitles, body data |
+| `--text-label` | `#E2E8F0` | `#000000` | Form labels, card captions |
+| `--text-muted` | `#94A3B8` | `#64748B` | Subtle hints, timestamps |
 | `--border-color` | `rgba(255, 255, 255, 0.14)` | `#CBD5E1` | Card boundaries, dividers |
 | `--primary` | `#3B82F6` | `#2563EB` | Action buttons, active badges |
+
+---
+
+## 2.1 Light Theme Bold Color Standard (Strict Black `#000000`)
+
+To guarantee maximum accessibility, contrast, and visual punch across light mode:
+- **All Bold Typography**: Elements marked with `b`, `strong`, `.fw-bold`, `.fw-bolder`, `.fw-semibold`, `font-weight: 700`, `font-weight: 800`, or `font-weight: 600` are strictly set to **solid black (`#000000 !important`)**.
+- **Headings & Titles**: `h1` through `h6`, `.topbar-title h4`, `.brand-text h5`, `.card-header`, `.modal-title`, and `.auth-card h4` are strictly **solid black (`#000000 !important`)**.
+- **Data Values & Metrics**: KPI values (`.kpi-value`), table headers (`.custom-table th`), vehicle registration numbers, and driver detail values default to **solid black (`#000000 !important`)**.
+- **Form Labels**: `.form-label`, `label.form-label`, and `label` are enforced in bold solid black (`#000000 !important`, font-weight 700).
+- **Exceptions**: Status-indicating utility classes (`.text-success`, `.text-danger`, `.text-warning`, `.text-info`, `.text-primary`), `.badge`, and action buttons (`.btn`) retain their respective functional branding colors.
 
 ---
 

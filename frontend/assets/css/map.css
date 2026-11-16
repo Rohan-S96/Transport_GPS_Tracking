@@ -147,7 +147,7 @@
 [data-bs-theme="light"] .leaflet-bar a,
 [data-theme="light"] .leaflet-bar a {
   background-color: #FFFFFF !important;
-  color: #0F172A !important;
+  color: #000000 !important;
   border-bottom: 1px solid rgba(15, 23, 42, 0.1) !important;
 }
 

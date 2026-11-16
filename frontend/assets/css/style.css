@@ -84,9 +84,9 @@
   --danger-subtle: rgba(220, 38, 38, 0.12);
   --info: #0284C7;
 
-  --text-main: #0F172A;
-  --text-secondary: #334155;
-  --text-label: #1E293B;
+  --text-main: #000000;
+  --text-secondary: #1E293B;
+  --text-label: #000000;
   --text-muted: #64748B;
   --text-dim: #94A3B8;
 
@@ -149,11 +149,12 @@ label.text-muted,
 
 [data-bs-theme="light"] .form-label,
 [data-bs-theme="light"] label.form-label,
-[data-bs-theme="light"] label,
+[data-bs-theme="light"] label:not(.btn),
 [data-theme="light"] .form-label,
 [data-theme="light"] label.form-label,
-[data-theme="light"] label {
-  color: #1E293B !important;
+[data-theme="light"] label:not(.btn) {
+  color: #000000 !important;
+  font-weight: 700 !important;
   text-shadow: none !important;
 }
 
@@ -162,6 +163,38 @@ label.text-muted,
 [data-theme="light"] label.text-muted,
 [data-theme="light"] .form-label.text-muted {
   color: #64748B !important;
+}
+
+/* ==============================================================================
+   LIGHT THEME: ALL BOLD & HEADING ELEMENTS ENFORCED IN SOLID BLACK (#000000)
+   ============================================================================== */
+[data-bs-theme="light"] b,
+[data-bs-theme="light"] strong,
+[data-bs-theme="light"] .fw-bold:not(.text-success):not(.text-danger):not(.text-warning):not(.text-info):not(.text-primary):not(.badge):not(.btn),
+[data-bs-theme="light"] .fw-bolder:not(.text-success):not(.text-danger):not(.text-warning):not(.text-info):not(.text-primary):not(.badge):not(.btn),
+[data-bs-theme="light"] .fw-semibold:not(.text-success):not(.text-danger):not(.text-warning):not(.text-info):not(.text-primary):not(.badge):not(.btn),
+[data-bs-theme="light"] h1,
+[data-bs-theme="light"] h2,
+[data-bs-theme="light"] h3,
+[data-bs-theme="light"] h4,
+[data-bs-theme="light"] h5,
+[data-bs-theme="light"] h6,
+[data-bs-theme="light"] th,
+[data-bs-theme="light"] dt,
+[data-theme="light"] b,
+[data-theme="light"] strong,
+[data-theme="light"] .fw-bold:not(.text-success):not(.text-danger):not(.text-warning):not(.text-info):not(.text-primary):not(.badge):not(.btn),
+[data-theme="light"] .fw-bolder:not(.text-success):not(.text-danger):not(.text-warning):not(.text-info):not(.text-primary):not(.badge):not(.btn),
+[data-theme="light"] .fw-semibold:not(.text-success):not(.text-danger):not(.text-warning):not(.text-info):not(.text-primary):not(.badge):not(.btn),
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] h5,
+[data-theme="light"] h6,
+[data-theme="light"] th,
+[data-theme="light"] dt {
+  color: #000000 !important;
 }
 
 /* App Layout */
@@ -392,12 +425,12 @@ label.text-muted,
 
 [data-bs-theme="light"] .topbar-title h4,
 [data-theme="light"] .topbar-title h4 {
-  color: #0F172A;
+  color: #000000 !important;
 }
 
 [data-bs-theme="light"] .brand-text h5,
 [data-theme="light"] .brand-text h5 {
-  color: #0F172A;
+  color: #000000 !important;
 }
 
 [data-bs-theme="light"] .app-sidebar,
