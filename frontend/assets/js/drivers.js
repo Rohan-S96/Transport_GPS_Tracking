@@ -76,15 +76,15 @@ async function loadDrivers() {
 
         return `
           <div class="col-md-6 col-lg-4 mb-4">
-            <div class="kpi-card h-100 position-relative">
+            <div class="kpi-card h-100 position-relative driver-roster-card">
               <div class="d-flex align-items-center justify-content-between mb-3">
                 <div class="d-flex align-items-center gap-3">
                   <div class="kpi-icon-wrap kpi-icon-blue fs-4">
                     <i class="bi bi-person-badge-fill"></i>
                   </div>
                   <div>
-                    <h5 class="mb-0 fw-bold driver-card-name" style="color: var(--text-main); font-size: 1.1rem;">${driverName}</h5>
-                    <small class="text-muted">Lic: <code>${d.license_number || 'N/A'}</code></small>
+                    <h5 class="mb-0 fw-bold driver-card-name">${driverName}</h5>
+                    <small class="driver-card-lic">Lic: <code>${d.license_number || 'N/A'}</code></small>
                   </div>
                 </div>
                 <div>
@@ -93,23 +93,23 @@ async function loadDrivers() {
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
-                <span class="text-muted">Phone Number</span>
-                <span class="fw-semibold driver-card-val" style="color: var(--text-main);">${d.phone_number || 'N/A'}</span>
+                <span class="driver-card-label">Phone Number</span>
+                <span class="fw-bold driver-card-val">${d.phone_number || 'N/A'}</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
-                <span class="text-muted">Safety Score</span>
+                <span class="driver-card-label">Safety Score</span>
                 <span class="fw-bold ${scoreColor}"><i class="bi bi-shield-check me-1"></i>${score}%</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary border-opacity-10 small">
-                <span class="text-muted">Assigned Truck</span>
-                <span class="driver-card-val" style="color: var(--text-main);">${assignedTruck}</span>
+                <span class="driver-card-label">Assigned Truck</span>
+                <span class="driver-card-val">${assignedTruck}</span>
               </div>
 
               <div class="d-flex justify-content-between align-items-center mb-3 small">
-                <span class="text-muted">License Expiry</span>
-                <span class="driver-card-val" style="color: var(--text-main);">${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
+                <span class="driver-card-label">License Expiry</span>
+                <span class="driver-card-val">${d.license_expiry ? Utils.formatDate(d.license_expiry).split(',')[0] : 'N/A'}</span>
               </div>
 
               <div class="d-flex gap-2 pt-2 border-top border-secondary border-opacity-10">

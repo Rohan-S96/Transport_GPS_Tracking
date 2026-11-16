@@ -321,23 +321,66 @@ textarea.form-control:focus {
 [data-bs-theme="light"] .kpi-card h5,
 [data-theme="light"] .kpi-card h5,
 [data-bs-theme="light"] .driver-card-name,
-[data-theme="light"] .driver-card-name {
-  color: #0F172A !important;
+[data-theme="light"] .driver-card-name,
+.driver-card-name {
+  color: #000000 !important;
+  font-weight: 800 !important;
+  font-size: 1.22rem !important;
+  letter-spacing: -0.01em;
 }
 
-[data-bs-theme="light"] .driver-card-val,
-[data-theme="light"] .driver-card-val {
+.driver-card-label {
   color: #1E293B !important;
+  font-weight: 700 !important;
 }
 
-[data-bs-theme="dark"] .driver-card-name,
-[data-theme="dark"] .driver-card-name {
-  color: #FFFFFF !important;
+.driver-card-val {
+  color: #000000 !important;
+  font-weight: 700 !important;
 }
 
-[data-bs-theme="dark"] .driver-card-val,
-[data-theme="dark"] .driver-card-val {
-  color: #E2E8F0 !important;
+.driver-card-lic {
+  color: #334155 !important;
+  font-weight: 600 !important;
+}
+
+.driver-card-lic code {
+  color: #000000 !important;
+  background: #E2E8F0 !important;
+  font-weight: 700 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+}
+
+/* Modal details in bold black */
+#addDriverModal .modal-title,
+#editDriverModal .modal-title {
+  color: #000000 !important;
+  font-weight: 800 !important;
+}
+
+#addDriverModal .form-label,
+#editDriverModal .form-label {
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.05em !important;
+}
+
+#addDriverModal .form-control,
+#editDriverModal .form-control,
+#addDriverModal .form-select,
+#editDriverModal .form-select {
+  color: #000000 !important;
+  font-weight: 600 !important;
+  border: 1.5px solid #94A3B8 !important;
+  background-color: #FFFFFF !important;
+}
+
+#addDriverModal .form-control::placeholder,
+#editDriverModal .form-control::placeholder {
+  color: #64748B !important;
+  font-weight: 500 !important;
 }
 
 [data-bs-theme="light"] .text-white:not(.btn):not(.badge):not(.toast):not(.alert),
